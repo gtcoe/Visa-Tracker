@@ -1,7 +1,5 @@
-const authJwt = require("./authJwt");
-const verifySignUp = require("./verifySignUp");
+const authJwt = require("./roleAuthMiddleware");
 
 module.exports = {
   authJwt,
-  verifySignUp
 };

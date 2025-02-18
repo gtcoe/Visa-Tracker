@@ -1,7 +1,7 @@
 {
-  "name": "node-js-jwt-auth",
+  "name": "VisaPlatform",
   "version": "1.0.0",
-  "description": "Node.js Demo for JWT Authentication",
+  "description": "SASS: Visa Processing",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,14 +13,26 @@
     "express",
     "mysql"
   ],
-  "author": "bezkoder",
+  "author": "Garvit Tyagi",
   "license": "ISC",
   "dependencies": {
+    "async_hooks": "^1.0.0",
+    "aws-sdk": "^2.1692.0",
     "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "formidable": "^3.5.2",
+    "json2xls": "^0.1.2",
     "jsonwebtoken": "^9.0.0",
+    "moment": "^2.30.1",
+    "mysql": "^2.18.1",
     "mysql2": "^2.3.3",
-    "sequelize": "^6.32.1"
+    "node-cache": "^5.1.2",
+    "s3-upload-stream": "^1.0.7",
+    "sequelize": "^6.32.1",
+    "underscore": "^1.13.7",
+    "uuid": "^11.0.5",
+    "winston": "^3.17.0"
   }
 }
