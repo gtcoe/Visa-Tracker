@@ -39,15 +39,10 @@ let userService = () => {
         }
     };
 
-    const create = async (request) => {
+    const addUser = async (request) => {
         try {
-            if (request.type === constants.USER_TABLE.TYPE.ADMIN && request.superpass !== constants.ADMIN_API_SUPERPASS){
-                return {
-                    status: false,
-                    message: "Superpass required to create admin user."
-                }
-            }
-            const resp = await userRepository.getUserByID(request.email);
+
+            const resp = await userRepository.getUserByEmail(request.email);
 
             if (resp !== null) {
                 return {
@@ -56,14 +51,15 @@ let userService = () => {
                 }
             }
 
-            request.password = generateRandomString(12);
+            const password = generateRandomString(12);
+            request.password = bcrypt.hashSync(req.body.password, 15)
+            request.password_valid_till = moment(new Date()).add(30, 'days').format('YYYY-MM-DD HH:mm:ss');
 
-            // todo: send email with password
-
-            return await userRepository.insertUser(requestData);
+            // todo: send email with random generated password
+            return await userRepository.insertUser(request);
             
         } catch (e) {
-            logger.error(`error in userService.create - ${ generateError(e) }`);
+            logger.error(`error in userService.addUser - ${ generateError(e) }`);
             throw e;
         }
     };
@@ -101,7 +97,7 @@ let userService = () => {
         get,
         fetchClients,
         updateStatus,
-        create,
+        addUser,
         search
     };
 };

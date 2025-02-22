@@ -2,6 +2,8 @@ const { logger } = require("../logging")
 const moment = require('moment');
 const { constant } = require("underscore");
 const Response = require("../models/response");
+var bcrypt = require("bcryptjs");
+
 let userController = () => {
 
     const { generateError, convertFareInRupee , convertFareInPaise} = require("../services/util")();
@@ -45,7 +47,47 @@ let userController = () => {
         }
     };
 
-    const create = async (req, res) => {
+    const addUser = async (req, res) => {
+        let response = new Response(false);
+        try {
+            // todo clear body
+            // const requestData = {
+            //     name: req.body.name,
+            //     email: req.body.email,
+            //     phone: req.body.phone,
+            //     status: req.body.status,
+            //     last_updated_by: req.body.user_id,
+            //     type: req.body.type,
+            //     superpass: req.body.superpass,
+            //     address: req.body.address,
+            //     poc: req.body.poc
+            // };
+
+            const requestData = {
+                name: req.body.name,
+                email: req.body.email,
+                status: req.body.status,
+                type: req.body.type,
+                last_updated_by: req.body.user_id,
+                password: bcrypt.hashSync(req.body.password, 12)
+            }
+
+            const resp = await userService.addUser(requestData);
+            if (resp !== null){
+                response.set(approveResponse);
+                response.setStatusCode(401);
+            }else {
+                response.setStatus(true);
+            }
+            res.send(response);
+        } catch (e) {
+            logger.error(`error in userController.addUser - ${ generateError(e) }`);
+            response.message = e.message;
+            res.send(response);
+        }
+    };
+
+    const addClient = async (req, res) => {
         let response = new Response(false);
         try {
             // todo clear body
@@ -116,7 +158,8 @@ let userController = () => {
         get,
         fetchClients,
         updateStatus,
-        create,
+        addUser,
+        addClient,
         search
     };
 };

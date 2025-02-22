@@ -23,10 +23,11 @@ let router = () => {
 
 
   authRouter.route('/signin').post( controller.signIn);
+  authRouter.route('/requestNewPassword').post( controller.requestNewPassword);
 
   // authRouter.route('/presignin').post( controller.signIn);
 
-  authRouter.route('/signup').post( controller.signUp);
+  // authRouter.route('/signup').post( controller.signUp);
 
 return authRouter;
 

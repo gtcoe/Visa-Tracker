@@ -10,7 +10,7 @@ let router = () => {
   let applicationRouter = express.Router();
 
 
-  applicationRouter.route('/').post((req, res, next) => {
+  applicationRouter.route('/initiate').post((req, res, next) => {
     req.type_required = [constants.USER_TABLE.TYPE.ADMIN, constants.USER_TABLE.TYPE.MANAGER];
     next();
 }, roleAuthMiddleware.hasPermission,requestValidator(userRequestValidationConfig.add), controller.create);

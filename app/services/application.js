@@ -33,15 +33,8 @@ let applicationService = () => {
             const resp = await applicationRepository.create(request);
 
             if (resp !== null) {
-                return {
-                    status: false,
-                    message: "application with same email already exists."
-                }
+                
             }
-
-            request.password = generateRandomString(12);
-
-            // todo: send email with password
 
             return await applicationRepository.insertapplication(requestData);
             

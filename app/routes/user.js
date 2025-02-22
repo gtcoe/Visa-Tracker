@@ -21,10 +21,16 @@ let router = () => {
 }, roleAuthMiddleware.hasPermission, controller.fetchClients);
 
   // done -- request body finalisation pending and also update permission accordingly
-  userRouter.route('/').post((req, res, next) => {
+  userRouter.route('/addUser').post((req, res, next) => {
     req.type_required = [constants.USER_TABLE.TYPE.ADMIN];
     next();
-    }, roleAuthMiddleware.hasPermission,requestValidator(userRequestValidationConfig.add), controller.create);
+    }, roleAuthMiddleware.hasPermission,requestValidator(userRequestValidationConfig.add), controller.addUser);
+
+  // done -- request body finalisation pending and also update permission accordingly
+  userRouter.route('/addClient').post((req, res, next) => {
+    req.type_required = [constants.USER_TABLE.TYPE.ADMIN];
+    next();
+    }, roleAuthMiddleware.hasPermission,requestValidator(userRequestValidationConfig.add), controller.addClient);
 
   // userRouter.route('/').put((req, res, next) => {
   //   req.type_required = [constants.USER_TABLE.TYPE.ADMIN];

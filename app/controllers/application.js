@@ -50,15 +50,15 @@ let applicationController = () => {
         try {
             // todo clear body
             const requestData = {
-                name: req.body.name,
-                email: req.body.email,
-                phone: req.body.phone,
-                status: req.body.status,
-                last_updated_by: req.body.application_id,
-                type: req.body.type,
-                superpass: req.body.superpass,
-                address: req.body.address,
-                poc: req.body.poc
+                paxType: req.body.pax_type,
+                countryOfResidence: req.body.country_of_residence,
+                clientUserId: req.body.client_user_id,
+                stateOfResidence: req.body.state_of_residence,
+                citizenship: req.body.citizenship,
+                service: req.body.service,
+                referrer: req.body.referrer,
+                fileNumber: req.body.file_number,
+                updatedById: req.body.user_id
             };
 
             const resp = await applicationService.create(requestData);
