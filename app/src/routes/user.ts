@@ -1,11 +1,9 @@
-import express, { Router, Request, Response, NextFunction } from "express";
-import {get, fetchClients, addUser, addClient, search, updateStatus} from "../controllers/user";
+import userController from "../controllers/user";
 import hasPermission from "../middleware/roleAuthMiddleware";
 import requestValidator from "../middleware/requestValidatorMiddleware";
 import userRequestValidationConfig from "../config/request/user";
 import constants from "../config/constants";
-
-// Initialize role authentication middleware
+import { express, NextFunction, Router } from "../app";
 
 // Helper middleware to assign role-based permissions
 const withAuth = (roles: number[]) => [
@@ -19,45 +17,57 @@ const withAuth = (roles: number[]) => [
 // Initialize router
 const userRouter: Router = express.Router();
 
-// Get user(s)
-userRouter.route(["/", "/:id"]).get(
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
-  requestValidator(userRequestValidationConfig.get),
-  get
-);
+//Done
+userRouter
+  .route("/:id")
+  .get(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+      constants.USER_TABLE.TYPE.CLIENT,
+    ]),
+    requestValidator(userRequestValidationConfig.getById),
+    userController.getById
+  );
 
-// Fetch clients
-userRouter.route("/clients").get(
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN, constants.USER_TABLE.TYPE.MANAGER]),
-  fetchClients
-);
+//Done
+// Get all users
+userRouter
+  .route("/")
+  .get(
+    ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
+    requestValidator(userRequestValidationConfig.get),
+    userController.getAll
+  );
 
+//Done
 // Add user
-userRouter.route("/addUser").post(
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
-  // requestValidator(userRequestValidationConfig.addUser), // Renamed for clarity
-  addUser
-);
+userRouter
+  .route("/create")
+  .post(
+    ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
+    requestValidator(userRequestValidationConfig.add),
+    userController.addUser
+  );
 
-// Add client
-userRouter.route("/addClient").post(
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
-  // requestValidator(userRequestValidationConfig.addClient), // Renamed for clarity
-  addClient
-);
-
+//Done
 // Update user status
-userRouter.route("/status").post(
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
-  requestValidator(userRequestValidationConfig.updateStatus),
-  updateStatus
-);
+userRouter
+  .route("/status")
+  .post(
+    ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
+    requestValidator(userRequestValidationConfig.updateStatus),
+    userController.updateStatus
+  );
 
 // Search users
-userRouter.route("/search").post(
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
-  requestValidator(userRequestValidationConfig.search),
-  search
-);
+//Done
+userRouter
+  .route("/search")
+  .post(
+    ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
+    requestValidator(userRequestValidationConfig.search),
+    userController.search
+  );
 
 export default userRouter;

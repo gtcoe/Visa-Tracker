@@ -1,147 +1,337 @@
 import constants from "../config/constants";
 import { logger } from "../logging";
-import moment from "moment";
-import { Request, Response } from "express";
-import { generateError, generateRandomString } from "./util";
-import {getApplicationByID, ApplicationData, createApplication} from "../repositories/application";
-import formidable, { Fields, Files } from "formidable";
+import Response from "../models/response";
+import { generateError, generateRandomString } from "../services/util";
+import ApplicationRepository, {
+  ApplicationData,
+  GetApplicationDataDBResponse,
+} from "../repositories/application";
+import userRepositoryFactory, {
+  UserData,
+  GetUserDataDBResponse,
+} from "../repositories/user";
 
-// Define interfaces for our application requests/responses if needed
-interface ApplicationRequest {
-  id?: string;
-  status?: string;
-  password?: string;
-  last_updated_by?: string;
-  email?: string;
-  // add other fields as needed
-}
+import passengerRepositoryFactory, {
+  PassengerData,
+  GetPassengerDataDBResponse,
+} from "../repositories/passenger";
+import applicationPassengerRepositoryFactory, {
+  ApplicationPassengerMappingData,
+  GetApplicationPassengerMappingDataDBResponse,
+} from "../repositories/applicationPassengerMapping";
+import { AddStep1DataRequest } from "../models/Application/addStep1DataRequest";
+import { AddStep2DataRequest } from "../models/Application/addStep2DataRequest";
+import { AddStep3DataRequest } from "../models/Application/addStep3DataRequest";
+import { AddStep4DataRequest } from "../models/Application/addStep4DataRequest";
+import { SearchPaxRequest } from "../models/Application/searchPax";
+import { SearchRequest } from "../models/Application/tracker";
 
-interface DocumentUploadRequest {
-  docLink: string;
-  applicationId: string;
-  agreementImage: any; // Ideally replace "any" with a more specific type
-}
+const applicationService = () => {
+  const applicationRepository = ApplicationRepository();
+  const userRepository = userRepositoryFactory();
+  const passengerRepository = passengerRepositoryFactory();
+  const applicationPassengerRepository =
+    applicationPassengerRepositoryFactory();
 
-// Factory function to create an instance of applicationRepository
+  //Done
+  const addStep1Data = async (request: AddStep1DataRequest): Promise<any> => {
+    const response = new Response(false);
+    try {
+      /// Client User verifications
+      // Fetch user info using email
+      const userResponse: GetUserDataDBResponse | null =
+        await userRepository.getByID(request.client_user_id);
 
-const getById = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    if (!id) {
-      // Handle missing ID error (e.g., throw a custom error or return a response)
-      res.status(400).json({ message: "Missing application ID" });
-      return;
-    }
-    // const application: ApplicationData | null = await getApplicationByID(id);
-    // if (application) {
-    //   resp.data = resp.data.length > 0 ? resp.data[0] : {};
-    //   delete resp.total_pages;
-    // }
-    // res.json(resp);
-  } catch (e) {
-    logger.error(`error in applicationService.getById - ${generateError(e)}`);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-const create = async (request: ApplicationRequest): Promise<any> => {
-  try {
-    // const resp = await createApplication(request);
-    // if (resp !== null) {
-    //   // You may want to handle the scenario if the response is not null
-    // }
-    // // Assuming requestData is the same as request or some transformation of it
-    // return await insertapplication(request);
-  } catch (e) {
-    logger.error(`error in applicationService.create - ${generateError(e)}`);
-    throw e;
-  }
-};
-
-const addDetails = async (request: ApplicationRequest): Promise<any> => {
-  try {
-    // const existingApplication = await applicationRepository.create(request);
-    // if (existingApplication !== null) {
-    //   return {
-    //     status: false,
-    //     message: "application with same email already exists.",
-    //   };
-    // }
-    // // Generate a random password and assign it
-    // request.password = generateRandomString(12);
-    // // TODO: Send email with password here
-    // // Assuming requestData is the same as request or some transformation of it
-    // return await applicationRepository.addDetails(request);
-  } catch (e) {
-    logger.error(`error in applicationService.addDetails - ${generateError(e)}`);
-    throw e;
-  }
-};
-
-const formidablePromise = (req: Request): Promise<{ fields: Fields; files: Files }> => {
-  return new Promise((resolve, reject) => {
-    const form = formidable({ multiples: true });
-    form.parse(req, (err, fields, files) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ fields, files });
+      // Error Fetching userInfo
+      if (!userResponse || !userResponse.status) {
+        throw new Error("Unable to fetch user info");
       }
-    });
-  });
+
+      // User with this email already exists
+      if ((userResponse?.data || []).length == 0) {
+        response.setMessage(
+          `Invalid Client User ID: ${request.client_user_id}`
+        );
+        return response;
+      }
+
+      // client status check
+      if (userResponse?.data?.[0]?.status !== constants.STATUS.USER.ACTIVE) {
+        response.setMessage(`Client currently inactive`);
+        return response;
+      }
+
+      request.status = constants.STATUS.APPLICATION.STEP1_DONE;
+      request.reference_number =
+        generateRandomString(3, "alpha") + generateRandomString(4, "num");
+      // Create Application
+      const resp: any = await applicationRepository.insertAddStep1Data(request);
+      if (!resp.status) {
+        throw new Error("Unable to create application");
+      }
+
+      response.setStatus(true);
+      return response;
+    } catch (e) {
+      logger.error(
+        `error in applicationService.addStep1Data - ${generateError(e)}`
+      );
+      throw e;
+    }
+  };
+
+  //Done
+  const addStep2Data = async (request: AddStep2DataRequest): Promise<any> => {
+    const response = new Response(false);
+    try {
+      /// Fetch passenger data
+      const passengerResponse: GetPassengerDataDBResponse =
+        await passengerRepository.getByPassengerIds([request.pax_id]);
+
+      // Error Fetching passengerInfo
+      if (!passengerResponse || !passengerResponse.status) {
+        throw new Error(
+          `unable to fetch passenger info by pax_id: ${request.pax_id}`
+        );
+      }
+
+      const passengerInfo: PassengerData | null = passengerResponse.data
+        ? passengerResponse.data[0]
+        : null;
+      if (passengerInfo == null) {
+        response.setMessage(`Invalid Passenger ID: ${request.pax_id}`);
+        return response;
+      }
+
+      if (passengerInfo.status !== constants.STATUS.PASSENGER.ACTIVE) {
+        response.setMessage(
+          `Passenger with ID: ${request.pax_id} is currently inactive`
+        );
+        return response;
+      }
+
+      /// Fetch Application data
+      const applicationResponse: GetApplicationDataDBResponse =
+        await applicationRepository.getByReferenceNumber(
+          request.reference_number
+        );
+
+      // Error Fetching passengerInfo
+      if (!applicationResponse || !applicationResponse.status) {
+        throw new Error(
+          `unable to fetch application info by reference_number: ${request.reference_number}`
+        );
+      }
+
+      const applicationInfo: ApplicationData | null = applicationResponse.data
+        ? applicationResponse.data[0]
+        : null;
+      if (applicationInfo == null) {
+        response.setMessage(
+          `Invalid application reference_number: ${request.reference_number}`
+        );
+        return response;
+      }
+
+      // if (applicationInfo.status !== constants.STATUS.APPLICATION.STEP1_DONE) {
+      //   response.setMessage(`Application with ID: ${request.reference_number} is currently on wrong status: ${applicationInfo.status}`);
+      //   return response;
+      // }
+
+      // create application passenger mapping
+      const insertResponse: any = await applicationPassengerRepository.insert({
+        application_id: applicationInfo.id,
+        passenger_id: request.pax_id,
+        status: constants.STATUS.APPLICATION_PASSENGER_MAPPING.ACTIVE,
+        last_updated_by: request.last_updated_by,
+      });
+      if (!insertResponse.status) {
+        throw new Error("Unable to insert application passenger mapping");
+      }
+
+      // update application status
+      const updateResponse: any = await applicationRepository.updateStatus(
+        constants.STATUS.APPLICATION_PASSENGER_MAPPING.ACTIVE,
+        applicationInfo.id || 0,
+        request.last_updated_by
+      );
+      if (!updateResponse.status) {
+        throw new Error("Unable to update application status");
+      }
+
+      response.setStatus(true);
+      return response;
+    } catch (e) {
+      logger.error(
+        `error in applicationService.addStep1Data - ${generateError(e)}`
+      );
+      throw e;
+    }
+  };
+
+  //Done
+  const searchPax = async (request: SearchPaxRequest): Promise<any> => {
+    const response = new Response(false);
+    try {
+      let passengerIds: number[] = [];
+      if (request.reference_number.length > 0) {
+        const applicationResponse: GetApplicationDataDBResponse =
+          await applicationRepository.searchSubmittedApplicationsByReferenceNumber(
+            request.reference_number,
+            constants.STATUS.APPLICATION.STEP4_DONE
+          );
+
+        // Error Fetching applicationResponse
+        if (!applicationResponse || !applicationResponse.status) {
+          throw new Error(
+            `unable to fetch application info by reference_number: ${request.reference_number}`
+          );
+        }
+
+        const applicationsInfo: ApplicationData[] = applicationResponse.data
+          ? applicationResponse.data
+          : [];
+        if (applicationsInfo.length > 0) {
+          const applicationids: number[] = applicationsInfo
+            .map((app) => app.id)
+            .filter((id): id is number => id !== undefined);
+
+          const mappingResponse: GetApplicationPassengerMappingDataDBResponse =
+            await applicationPassengerRepository.getByApplicationIds(
+              applicationids,
+              [constants.STATUS.APPLICATION_PASSENGER_MAPPING.ACTIVE]
+            );
+
+          // Error Fetching applicationResponse
+          if (!mappingResponse || !mappingResponse.status) {
+            throw new Error(
+              `unable to fetch mapping info by application ids: ${applicationids}`
+            );
+          }
+          const mappingInfo: ApplicationPassengerMappingData[] =
+            mappingResponse.data ? mappingResponse.data : [];
+
+          passengerIds = mappingInfo
+            .map((app) => app.passenger_id)
+            .filter((id): id is number => id !== undefined);
+        }
+      }
+
+      // if reference number present, fetch related passenger id
+      // add pax_name and passport_number as or if present
+      const passengerResponse: GetPassengerDataDBResponse =
+        await passengerRepository.search(
+          passengerIds,
+          request.pax_name,
+          request.passport_number
+        );
+
+      // Error Fetching applicationResponse
+      if (!passengerResponse || !passengerResponse.status) {
+        throw new Error(
+          `unable to fetch passenger info by passengerIds: ${passengerIds}, request.pax_name: ${request.pax_name}, request.passport_number: ${request.passport_number}`
+        );
+      }
+      const mappingInfo: PassengerData[] = passengerResponse.data
+        ? passengerResponse.data
+        : [];
+
+      response.setStatus(true);
+      response.setData("passengers_info", mappingInfo);
+      return response;
+    } catch (e) {
+      logger.error(
+        `error in applicationService.searchPax - ${generateError(e)}`
+      );
+      throw e;
+    }
+  };
+
+  //Done
+  const addStep4Data = async (request: AddStep4DataRequest): Promise<any> => {
+    const response = new Response(false);
+    try {
+      /// Fetch Application data
+      const applicationResponse: GetApplicationDataDBResponse =
+        await applicationRepository.getByReferenceNumber(
+          request.reference_number
+        );
+
+      // Error Fetching passengerInfo
+      if (!applicationResponse || !applicationResponse.status) {
+        throw new Error(
+          `unable to fetch application info by reference_number: ${request.reference_number}`
+        );
+      }
+
+      const applicationInfo: ApplicationData | null = applicationResponse.data
+        ? applicationResponse.data[0]
+        : null;
+      if (applicationInfo == null) {
+        response.setMessage(
+          `Invalid application reference_number: ${request.reference_number}`
+        );
+        return response;
+      }
+
+      // if (applicationInfo.status !== constants.STATUS.APPLICATION.STEP1_DONE) {
+      //   response.setMessage(`Application with ID: ${request.reference_number} is currently on wrong status: ${applicationInfo.status}`);
+      //   return response;
+      // }
+
+      // update application status and details
+      const updateResponse: any = await applicationRepository.updateStep4Data(
+        request,
+        applicationInfo.id || 0
+      );
+      if (!updateResponse.status) {
+        throw new Error("Unable to update application status");
+      }
+
+      response.setStatus(true);
+      return response;
+    } catch (e) {
+      logger.error(
+        `error in applicationService.addStep4Data - ${generateError(e)}`
+      );
+      throw e;
+    }
+  };
+
+  const search = async (request: SearchRequest): Promise<any> => {
+    const response = new Response(false);
+    try {
+      response.setStatus(true);
+      return response;
+    } catch (e) {
+      logger.error(
+        `error in applicationService.SearchRequest - ${generateError(e)}`
+      );
+      throw e;
+    }
+  };
+
+  const addStep3Data = async (request: AddStep4DataRequest): Promise<any> => {
+    const response = new Response(false);
+    try {
+      response.setStatus(true);
+      return response;
+    } catch (e) {
+      logger.error(
+        `error in applicationService.addStep3Data - ${generateError(e)}`
+      );
+      throw e;
+    }
+  };
+
+  return {
+    addStep1Data,
+    addStep2Data,
+    searchPax,
+    addStep4Data,
+    search,
+    addStep3Data,
+  };
 };
 
-const uploadDocuments = async (req: Request, res: Response): Promise<void> => {
-  try {
-    // const { fields, files } = await formidablePromise(req);
-
-    // Prepare requestData with unique keys
-    // const requestData: DocumentUploadRequest = {
-    //   docLink: req.body.docLink || "",
-    //   applicationId: req.body.applicationId || "",
-    //   agreementImage: files.agreementImage,
-    // };
-
-    // const result = await applicationRepository.updateDocuments(requestData, req.params.id);
-    // res.json(result);
-  } catch (e) {
-    logger.error(`error in applicationService.uploadDocuments - ${generateError(e)}`);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-const updateStatus = async (request: ApplicationRequest): Promise<any> => {
-  try {
-    // if (request.status === constants.STATUS.application.ACTIVE) {
-    //   request.password = generateRandomString(12);
-    //   // TODO: Send email with the new password
-    // }
-    // return await applicationRepository.updateStatus(
-    //   request.status as string,
-    //   request.password as string,
-    //   request.id as string,
-    //   request.last_updated_by as string
-    // );
-  } catch (e) {
-    logger.error(`error in applicationService.updateStatus - ${generateError(e)}`);
-    throw e;
-  }
-};
-
-const search = async (text: string): Promise<any> => {
-  try {
-    // return await applicationRepository.search(text);
-  } catch (e) {
-    logger.error(`error in applicationService.search - ${generateError(e)}`);
-    throw e;
-  }
-};
-
-export default {
-  getById,
-  updateStatus,
-  uploadDocuments,
-  create,
-  search,
-  addDetails,
-};
+export default applicationService;

@@ -1,70 +1,98 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import config from "../config/auth";
+import constants from "../config/constants";
 import MySql from "../database/mySql";
-import {getRequestContext, setRequestContext} from "../hooks/asyncHooks";
+import { getRequestContext, setRequestContext } from "../hooks/asyncHooks";
 import dayjs from "dayjs"; // Lighter alternative to moment.js
+import { UserData, GetUserDataDBResponse } from "../repositories/user";
 
 // JWT Payload Type
 interface DecodedToken extends JwtPayload {
-    user_id: number;
+  user_id: number;
 }
 
 // Middleware to verify JWT token
-const verifyToken = async (req: Request, res: any, next: NextFunction): Promise<any> => {
-    req.headers.languagecode = req.headers.languagecode || "en";
-    req.headers["accept-version"] = req.headers["accept-version"] || "1.0.0";
+const verifyToken = async (
+  req: Request,
+  res: any,
+  next: NextFunction
+): Promise<any> => {
+  req.headers.languagecode = req.headers.languagecode || "en";
+  req.headers["accept-version"] = req.headers["accept-version"] || "1.0.0";
 
-    const token = req.body.token || req.query.token || req.headers.auth_token;
-    if (!token) {
-        return res.status(401).json({ status: false, message: "No token provided." });
+  const token = req.body.token || req.query.token || req.headers.auth_token;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ status: false, message: "No token provided." });
+  }
+
+  try {
+    const decoded = jwt.verify(token, config.jwtSecret) as DecodedToken;
+
+    // Fetch user details from DB
+    const query = `SELECT name, email, status, type, password_valid_till FROM users WHERE id = ?`;
+    const params = [decoded.user_id];
+    const userResponse: GetUserDataDBResponse = await MySql.query<UserData[]>(
+      query,
+      params
+    );
+
+    // Error Fetching userInfo
+    if (!userResponse || !userResponse.status) {
+      throw new Error("unable to fetch user info for token validation");
+    }
+    const userInfo = userResponse.data ? userResponse.data[0] : null;
+
+    if (!userInfo) {
+      return res
+        .status(403)
+        .json({ status: false, message: "User Not Found", logout: true });
     }
 
-    try {
-        const decoded = jwt.verify(token, config.jwtSecret) as DecodedToken;
-
-        // Fetch user details from DB
-        const query = `SELECT * FROM users WHERE id = ? AND status = 1`;
-        const params = [decoded.user_id];
-        const queryRes = await MySql.query(query, params);
-
-        if (!queryRes.data.length) {
-            return res.status(403).json({ status: false, message: "Invalid token or user not found." });
-        }
-
-        const user = queryRes.data[0];
-
-        if (!user.last_login_at) {
-            return res.status(401).json({ status: false, message: "Session Expired. Please Login Again." });
-        }
-
-        const lastLoginDate = dayjs(user.last_login_at);
-        if (dayjs().isAfter(lastLoginDate.add(30, "days"))) {
-            return res.status(401).json({ status: false, message: "This account is currently inactive. Please contact Admin." });
-        }
-
-        // Attach user details to res.locals (best practice)
-        res.locals.user = {
-            id: user.id,
-            type: user.type,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-        };
-
-        // Set user context in async hooks
-        const reqContext = getRequestContext();
-        setRequestContext({
-            ...reqContext,
-            user_id: user.id,
-            type: user.type,
-        });
-
-        next();
-    } catch (err) {
-        console.error("JWT Verification Error:", err);
-        return res.status(403).json({ status: false, message: "Failed to authenticate token." });
+    if (userInfo.status !== constants.STATUS.USER.ACTIVE) {
+      return res.status(403).json({
+        status: false,
+        message: "User Currently Inactive",
+        logout: true,
+      });
     }
+
+    const passwordValidTill = dayjs(userInfo.password_valid_till);
+    if (dayjs().isAfter(passwordValidTill)) {
+      return res.status(403).json({
+        status: false,
+        message: "Password Expired. Request New Password.",
+        logout: true,
+      });
+    }
+
+    // Attach user details to res.locals (best practice)
+    res.locals.user = {
+      token_user_id: userInfo.id,
+      token_user_type: userInfo.type,
+      token_user_name: userInfo.name,
+      token_useremail: userInfo.email,
+    };
+
+    // Set userInfo context in async hooks
+    const reqContext = getRequestContext();
+    setRequestContext({
+      ...reqContext,
+      user_id: userInfo.id,
+      type: userInfo.type,
+    });
+
+    next();
+  } catch (err) {
+    console.error("JWT Verification Error:", err);
+    return res.status(403).json({
+      status: false,
+      message: "Failed to authenticate token.",
+      logout: true,
+    });
+  }
 };
 
 export default verifyToken;

@@ -1,162 +1,141 @@
 import { Request, Response } from "express";
 import { logger } from "../logging";
 import ApplicationService from "../services/application";
-import { generateError } from "../services/util";
+import { generateError, validateSearchParams } from "../services/util";
 import ResponseModel from "../models/response";
+import {
+  AddStep1DataRequest,
+  convertRequestToAddStep1DataRequest,
+} from "../models/Application/addStep1DataRequest";
+import {
+  AddStep2DataRequest,
+  convertRequestToAddStep2DataRequest,
+} from "../models/Application/addStep2DataRequest";
+import {
+  AddStep4DataRequest,
+  convertRequestToAddStep4DataRequest,
+} from "../models/Application/addStep4DataRequest";
+import {
+  SearchPaxRequest,
+  convertRequestToSearchPaxRequestt,
+} from "../models/Application/searchPax";
+import {
+  SearchRequest,
+  convertRequestToSearchRequestt,
+} from "../models/Application/tracker";
+import {
+  UpdateUserStatusRequest,
+  convertRequestToUpdateUserStatusRequest,
+} from "../models/User/updateUserStatusRequest";
 
-const applicationService = new ApplicationService();
+const applicationService = ApplicationService();
 
-/**
- * Retrieves an application by its ID.
- */
-export const getById = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    if (!req.params.id) {
-      response.message = "Application ID is required.";
-      res.status(400).send(response);
-      return;
+const ApplicationController = () => {
+  const addStep1Data = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const request: AddStep1DataRequest = convertRequestToAddStep1DataRequest(
+        req.body
+      );
+
+      const resp = await applicationService.addStep1Data(request);
+      res.send(resp);
+    } catch (e: any) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in addStep1Data: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
     }
+  };
 
-    const resp = await applicationService.getById(req.params.id);
-    response.setStatus(true);
-    response.data = resp?.data?.[0] || {};
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in getById: ${generateError(e)}`);
-    response.message = e.message;
-    res.status(500).send(response);
-  }
-};
+  const addStep2Data = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const request: AddStep2DataRequest = convertRequestToAddStep2DataRequest(
+        req.body
+      );
 
-/**
- * Creates a new application.
- */
-export const create = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const requestData = {
-      paxType: req.body.pax_type,
-      countryOfResidence: req.body.country_of_residence,
-      clientUserId: req.body.client_user_id,
-      stateOfResidence: req.body.state_of_residence,
-      citizenship: req.body.citizenship,
-      service: req.body.service,
-      referrer: req.body.referrer,
-      fileNumber: req.body.file_number,
-      updatedById: req.body.user_id,
-    };
-
-    const resp = await applicationService.create(requestData);
-    if (resp) {
-      response.setStatus(true);
-    } else {
-      response.setStatus(false);
-      response.setStatusCode(401);
+      const resp = await applicationService.addStep2Data(request);
+      res.send(resp);
+    } catch (e: any) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in addStep2Data: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
     }
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in create: ${generateError(e)}`);
-    response.message = e.message;
-    res.status(500).send(response);
-  }
-};
+  };
 
-/**
- * Adds details to an application.
- */
-export const addDetails = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const requestData = {
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
-      status: req.body.status,
-      lastUpdatedBy: req.body.application_id,
-      type: req.body.type,
-      superpass: req.body.superpass,
-      address: req.body.address,
-      poc: req.body.poc,
-    };
+  const searchPax = async (req: Request, res: Response): Promise<void> => {
+    const response = new ResponseModel(false);
+    try {
+      const request: SearchPaxRequest = convertRequestToSearchPaxRequestt(
+        req.body
+      );
 
-    const resp = await applicationService.addDetails(requestData);
-    if (resp) {
-      response.setStatus(true);
-    } else {
-      response.setStatus(false);
-      response.setStatusCode(401);
+      // if (request.passport_number.length === 0 && request.pax_name.length === 0 && request.reference_number.length === 0) {
+      //   response.message = "Search parameters missing";
+      //   res.status(400).send(response);
+      //   return;
+      // }
+
+      const filterAbsent: boolean = validateSearchParams(request);
+      if (filterAbsent) {
+        response.message = "Search parameters missing";
+        res.status(400).send(response);
+        return;
+      }
+
+      const resp = await applicationService.searchPax(request);
+      res.send(resp);
+    } catch (e: any) {
+      logger.error(`Error in searchPax: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
     }
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in addDetails: ${generateError(e)}`);
-    response.message = e.message;
-    res.status(500).send(response);
-  }
-};
+  };
 
-/**
- * Updates the status of an application.
- */
-export const updateStatus = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const data = {
-      remarks: req.body.remarks,
-      queue: req.body.queue,
-      status: req.body.status,
-    };
+  const addStep4Data = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const request: AddStep4DataRequest = convertRequestToAddStep4DataRequest(
+        req.body
+      );
 
-    await applicationService.updateStatus(data);
-    response.setStatus(true);
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in updateStatus: ${generateError(e)}`);
-    response.message = e.message;
-    res.status(500).send(response);
-  }
-};
-
-/**
- * Uploads documents related to an application.
- */
-export const uploadDocuments = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const data = {
-      remarks: req.body.remarks,
-      queue: req.body.queue,
-      status: req.body.status,
-    };
-
-    await applicationService.uploadDocuments(data);
-    response.setStatus(true);
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in uploadDocuments: ${generateError(e)}`);
-    response.message = e.message;
-    res.status(500).send(response);
-  }
-};
-
-/**
- * Searches for applications based on a provided text.
- */
-export const search = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    if (!req.body.text) {
-      response.message = "Search text is required.";
-      res.status(400).send(response);
-      return;
+      const resp = await applicationService.addStep4Data(request);
+      res.send(resp);
+    } catch (e: any) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in addStep4Data: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
     }
+  };
 
-    await applicationService.search(req.body.text);
-    response.setStatus(true);
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in search: ${generateError(e)}`);
-    response.message = e.message;
-    res.status(500).send(response);
-  }
+  const search = async (req: Request, res: Response): Promise<void> => {
+    const response = new ResponseModel(false);
+    try {
+      const request: SearchRequest = convertRequestToSearchRequestt(req.body);
+
+      const filterAbsent: boolean = validateSearchParams(request);
+      if (filterAbsent) {
+        response.message = "Search parameters missing";
+        res.status(400).send(response);
+        return;
+      }
+
+      const resp = await applicationService.search(request);
+      res.send(resp);
+    } catch (e: any) {
+      logger.error(`Error in search: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
+    }
+  };
+
+  return {
+    addStep1Data,
+    addStep2Data,
+    searchPax,
+    addStep4Data,
+    search,
+  };
 };
+
+export default ApplicationController();

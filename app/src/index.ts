@@ -1,12 +1,12 @@
 import { Application, NextFunction } from "express";
-import { app } from './app';
+import { app } from "./app";
 import bodyParser from "body-parser";
 import cors from "cors";
 import json2xls from "json2xls";
 // import AWS from "aws-sdk";
-import MySql from "./app/database/mySqlConnection";
-import {logger} from "./logging";
-const asyncHooks = require('./hooks/asyncHooks');
+import MySql from "./database/mySql";
+import { logger } from "./logging";
+const asyncHooks = require("./hooks/asyncHooks");
 
 // import s3Config from "./app/config/s3BucketConfig";
 
@@ -30,30 +30,35 @@ const setupMiddleware = (app: Application) => {
   );
   app.use(cors());
   app.disable("x-powered-by");
-  app.set('port', PORT);
+  app.set("port", PORT);
 
   app.use((req: any, res: any, next: NextFunction) => {
     asyncHooks.setRequestContext({
       requestId: "abc", // todo: generate random string
-      endpoint : req.originalUrl
-  });
+      endpoint: req.originalUrl,
+    });
 
     const oldSend = res.send.bind(res);
     let isLogged = true;
 
     res.send = (body: any) => {
       if (isLogged) {
-          logger.info(`api request - ${req.token && ('driver:' + req.token.driverId) || ''} ` + JSON.stringify({
+        logger.info(
+          `api request - ${
+            (req.token && "driver:" + req.token.driverId) || ""
+          } ` +
+            JSON.stringify({
               url: req.originalUrl,
               request: req.body,
               code: res.statusCode,
               response: body,
-              headers: req.headers
-          }));
+              headers: req.headers,
+            })
+        );
       }
       isLogged = false;
-      return oldSend(body);  // Ensure the response object is returned
-  };
+      return oldSend(body); // Ensure the response object is returned
+    };
     next();
   });
 };
@@ -87,7 +92,7 @@ const keepDatabaseAlive = async () => {
 const startServer = () => {
   setupMiddleware(app);
   // configureAWS();
-  require('./routes')();
+  require("./routes")();
 
   setInterval(keepDatabaseAlive, 5000);
 

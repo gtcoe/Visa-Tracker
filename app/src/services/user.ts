@@ -1,125 +1,237 @@
 import moment from "moment";
 import bcrypt from "bcrypt";
-import { Request, Response as ExpressResponse } from "express";
 
 import constants from "../config/constants";
 import { logger } from "../logging";
 import Response from "../models/response";
 import { generateError, generateRandomString } from "../services/util";
-import userRepositoryFactory, {UserData} from "../repositories/user";
+import userRepositoryFactory, {
+  UserData,
+  GetUserDataDBResponse,
+} from "../repositories/user";
+import { AddUserRequest } from "../models/User/addUserRequest";
+import { UpdateUserStatusRequest } from "../models/User/updateUserStatusRequest";
 
 interface UserRequest {
-  id?: string;
-  email?: string;
-  password?: string;
-  password_valid_till?: string;
-  status?: string;
-  last_updated_by?: string;
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  status: number;
+  type: number;
+  password_valid_till: string;
+  password_requested: number;
+  last_updated_by: number;
+  last_logged_in_at: number;
   // Additional fields can be added as needed.
 }
 
 const userService = () => {
   const userRepository = userRepositoryFactory();
 
-  /**
-   * Retrieves a user by ID.
-   * Sends an error response if the required parameter is missing.
-   */
-  const get = async (userId: number): Promise<Response | void> => {
+  //Done
+  const getAll = async (): Promise<Response | void> => {
     const response = new Response(false);
     try {
+      const userResponse: GetUserDataDBResponse = await userRepository.getAll();
 
-      if (!userId) {
-        // If ID is missing, send an error response.
-        response.setStatusCode(400)
-        response.setMessage("User ID is required.");
-        return;
+      // Error Fetching userInfo
+      if (!userResponse || !userResponse.status) {
+        throw new Error("unable to fetch user info");
       }
-      const userInfo: UserData | null = await userRepository.getUserByID(userId);
-      if (!userInfo) {
-        response.setMessage("Invalid User ID");
-        return response
-      }
+
       response.setStatus(true);
-      response.setData("user_info", userInfo);
-      return response
+      response.setData("users_info", userResponse.data);
+      return response;
     } catch (e) {
       logger.error(`error in userService.get - ${generateError(e)}`);
-      throw e
+      throw e;
     }
   };
 
-  /**
-   * Retrieves all clients.
-   */
-  const fetchClients = async (): Promise<any> => {
+  //Done
+  const getById = async (userId: number): Promise<Response | void> => {
+    const response = new Response(false);
     try {
-      return await userRepository.getUsersByType(constants.USER_TABLE.TYPE.CLIENT);
+      if (!userId) {
+        // If ID is missing, send an error response.
+        response.setStatusCode(400);
+        response.setMessage("User ID is required.");
+        return;
+      }
+
+      const userResponse: GetUserDataDBResponse = await userRepository.getByID(
+        userId
+      );
+
+      // Error Fetching userInfo
+      if (!userResponse || !userResponse.status) {
+        throw new Error("unable to fetch user info by userID");
+      }
+
+      response.setStatus(true);
+      response.setData(
+        "user_info",
+        userResponse.data ? userResponse.data[0] : null
+      );
+      return response;
+    } catch (e) {
+      logger.error(`error in userService.get - ${generateError(e)}`);
+      throw e;
+    }
+  };
+
+  const fetchClients = async (
+    email: string,
+    pageNo: number,
+    pageSize: number = 10
+  ): Promise<UserData[] | null> => {
+    try {
+      // Fetch user info using email
+      const userResponse: GetUserDataDBResponse =
+        await userRepository.getUsersByType(
+          constants.USER_TABLE.TYPE.CLIENT,
+          email,
+          pageNo,
+          pageSize
+        );
+
+      // Error Fetching userInfo
+      if (!userResponse || !userResponse.status) {
+        throw new Error("unable to fetch user info");
+      }
+
+      return userResponse.data;
     } catch (e) {
       logger.error(`error in userService.fetchClients - ${generateError(e)}`);
       throw e;
     }
   };
 
-  /**
-   * Adds a new user after checking that the email does not already exist.
-   * A random password is generated and encrypted.
-   */
-  const addUser = async (request: UserRequest, req: Request): Promise<any> => {
+  //Done
+  const addUser = async (request: AddUserRequest): Promise<any> => {
+    const response = new Response(false);
     try {
-      const existingUser = await userRepository.getUserByEmail(request.email!);
-      if (existingUser !== null) {
-        return {
-          status: false,
-          message: "User with same email already exists.",
-        };
+      // Fetch user info using email
+      const userResponse: GetUserDataDBResponse | null =
+        await userRepository.getUserByEmail(request.email);
+
+      // Error Fetching userInfo
+      if (!userResponse || !userResponse.status) {
+        throw new Error("Unable to fetch user info");
+      }
+
+      // User with this email already exists
+      if ((userResponse?.data || []).length > 0) {
+        response.setMessage("User with same email already exists.");
+        return response;
       }
 
       // Generate a random password.
       const password = generateRandomString(12);
-      // Use the provided password from request body if available, otherwise use generated one.
-      request.password = bcrypt.hashSync(req.body.password || password, 15);
+      request.password = bcrypt.hashSync(password, 15);
       request.password_valid_till = moment(new Date())
         .add(30, "days")
         .format("YYYY-MM-DD HH:mm:ss");
+      request.status = constants.STATUS.USER.ACTIVE;
 
       // TODO: Send email with the randomly generated password.
 
-      return await userRepository.insertUser(request);
+      // Create User
+      const resp: any = await userRepository.insertUser(request);
+      if (!resp.status) {
+        throw new Error("Unable to create user");
+      }
+
+      response.setStatus(true);
+      response.setMessage("User created successfully.");
+      return response;
     } catch (e) {
       logger.error(`error in userService.addUser - ${generateError(e)}`);
       throw e;
     }
   };
 
-  /**
-   * Updates a user's status and password.
-   * If the user is being activated, a new password is generated.
-   */
-  const updateStatus = async (request: UserRequest): Promise<any> => {
+  //Done
+  const updateStatus = async (
+    request: UpdateUserStatusRequest
+  ): Promise<any> => {
+    const response = new Response(false);
     try {
-      if (request.status === constants.STATUS.USER.ACTIVE) {
-        request.password = generateRandomString(12);
-        // TODO: Send email with the new password.
+      const userResponse: GetUserDataDBResponse | null =
+        await userRepository.getByID(request.user_id);
+
+      // Error Fetching userInfo
+      if (!userResponse || !userResponse.status) {
+        throw new Error("Unable to fetch user info");
       }
-      return await userRepository.updateStatusAndPassword(
-        request.status!,
-        request.password!,
-        request.id!,
-        request.last_updated_by!
-      );
+
+      // User with this email already exists
+      if ((userResponse.data || []).length == 0) {
+        response.setMessage("User with this ID does not exists.");
+        return response;
+      }
+
+      const userInfo = (userResponse.data || [])[0];
+
+      if (userInfo.status === request.status) {
+        response.setStatusCode(400);
+        response.setMessage("Status already updated.");
+        return response;
+      }
+
+      if (request.status === constants.STATUS.USER.ACTIVE) {
+        const password = generateRandomString(12);
+        const encryptedPassword = bcrypt.hashSync(password, 15);
+
+        const resp: any = await userRepository.updateStatusAndPassword(
+          request.status,
+          encryptedPassword,
+          request.user_id,
+          request.last_updated_by
+        );
+
+        if (!resp.status) {
+          throw new Error("Unable to update user status");
+        }
+
+        // todo send email
+      } else if (request.status === constants.STATUS.USER.INACTIVE) {
+        const resp: any = await userRepository.updateStatus(
+          request.status,
+          request.user_id,
+          request.last_updated_by
+        );
+        if (!resp.status) {
+          throw new Error("Unable to update user status");
+        }
+      }
+
+      response.setStatus(true);
+      response.setMessage("User status updated successfully.");
+      return response;
     } catch (e) {
       logger.error(`error in userService.updateStatus - ${generateError(e)}`);
       throw e;
     }
   };
 
-  /**
-   * Searches for users based on a provided text string.
-   */
+  //Done
   const search = async (text: string): Promise<any> => {
+    const response = new Response(false);
     try {
-      return await userRepository.search(text);
+      const userResponse: GetUserDataDBResponse = await userRepository.search(
+        text
+      );
+
+      // Error Fetching userInfo
+      if (!userResponse || !userResponse.status) {
+        throw new Error("unable to fetch user info");
+      }
+
+      response.setStatus(true);
+      response.setData("users_info", userResponse.data);
+      return response;
     } catch (e) {
       logger.error(`error in userService.search - ${generateError(e)}`);
       throw e;
@@ -127,7 +239,8 @@ const userService = () => {
   };
 
   return {
-    get,
+    getAll,
+    getById,
     fetchClients,
     updateStatus,
     addUser,

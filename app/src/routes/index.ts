@@ -1,13 +1,14 @@
-import express, { Request, Response } from "express";
 import routerConfig from "../config/routesConfig";
 import verifyToken from "../middleware/userAuthMiddleware";
 import userRouter from "./user";
+import clientRouter from "./client";
 import applicationRouter from "./application";
 import authRouter from "./auth";
 import { app } from "../app";
 
 // Apply route configurations
 app.use(routerConfig.USER_ROUTE, verifyToken, userRouter);
+app.use(routerConfig.CLIENT_ROUTE, verifyToken, clientRouter);
 app.use(routerConfig.APPLICATION_ROUTE, verifyToken, applicationRouter);
 app.use(routerConfig.AUTH_ROUTE, authRouter);
 

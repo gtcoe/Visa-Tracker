@@ -3,7 +3,7 @@ interface AuthConfig {
 }
 
 const auth: AuthConfig = {
-  jwtSecret: "bezkoder-secret-key"
+  jwtSecret: "bezkoder-secret-key",
 };
 
 export default auth;

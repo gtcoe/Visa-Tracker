@@ -1,165 +1,171 @@
 import constants from "../config/constants";
-import {generateError} from "../services/util";
+import { generateError } from "../services/util";
 import { logger } from "../logging";
 import Mysql from "../database/mySql";
-// import Mysql from "../database/postgreSqlConnection";
 import moment from "moment";
+import { AddStep1DataRequest } from "../models/Application/addStep1DataRequest";
+import {  } from "../models/Application/addStep3DataRequest";
+import { AddStep4DataRequest } from "../models/Application/addStep4DataRequest";
 
 export interface ApplicationData {
   id?: number;
-  name: string;
-  phone: string;
-  email: string;
-  password: string;
-  address: string;
-  poc: string;
-  last_updated_by: string;
-  type: string;
-  status?: number;
-  uuid?: string;
+  reference_number?: string;
+  pax_type: number;
+  country_of_residence: number;
+  client_user_id: number;
+  state_of_residence: number;
+  citizenship: number;
+  service_type: number;
+  referrer: string;
+  file_number_1: string;
+  travel_date?: string;
+  interview_date?: string;
+  file_number_2?: string;
+  is_travel_date_tentative?: boolean;
+  priority_submission?: boolean;
+  status: number;
+  queue: number;
+  external_status?: number;
+  olvt_number?: string;
+  processing_branch?: string;
+  team_remarks?: string;
+  client_remarks?: string;
+  billing_remarks?: string;
+  remarks?: string;
+  dispatch_medium?: number;
+  dispatch_medium_number?: string;
+  last_updated_by: number,
 }
 
-/**
- * Creates a new application and inserts a history record if an ID is returned.
- */
-export const createApplication = async (data: ApplicationData): Promise<void> => {
-  try {
-    const query = `INSERT INTO ${constants.TABLES.APPLICATION} 
-                (name, phone, email, password, address, poc, status, last_updated_by, type) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    
-    // TODO: Replace status below if needed.
-    const params = [
-      data.name,
-      data.phone,
-      data.email,
-      data.password,
-      data.address,
-      data.poc,
-      1,
-      data.last_updated_by,
-      data.type,
-    ];
+export interface GetApplicationDataDBResponse {
+  status: boolean;
+  data: ApplicationData[] | null;
+}
 
-    const resp = await Mysql.query(query, params);
-    if (resp.data.insertId) {
-      await insertApplicationHistory(resp.data.insertId);
+const applicationRepository = () => {
+
+  //Done
+  const insertAddStep1Data = async (
+    data: AddStep1DataRequest
+  ): Promise<any> => {
+    try {
+      const query = `INSERT INTO ${constants.TABLES.APPLICATION} 
+                (pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, status, last_updated_by, reference_number) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const params = [
+        data.pax_type,
+        data.country_of_residence,
+        data.client_user_id,
+        data.state_of_residence,
+        data.file_number,
+        data.service_type,
+        data.referrer,
+        data.citizenship,
+        data.status,
+        data.last_updated_by,
+        data.reference_number,
+      ];
+      const resp = await Mysql.query(query, params);
+      
+      if (resp.data?.insertId) {
+        insertHistory(resp.data.insertId);
+      }
+      return resp;
+    } catch (e) {
+      logger.error(`Error in insertAddStep1Data: ${generateError(e)}`);
+      throw e;
     }
-  } catch (e) {
-    logger.error(`Error in createApplication: ${generateError(e)}`);
-    throw e;
-  }
-};
+  };
 
-/**
- * Inserts an application history record.
- */
-export const insertApplicationHistory = async (id: number): Promise<void> => {
-  try {
-    const query = `INSERT INTO ${constants.TABLES.APPLICATION_HISTORY} 
-                (application_id, name, phone, email, password, address, poc, status, last_updated_by, type) 
-                SELECT id, name, phone, email, password, address, poc, status, last_updated_by, type 
+  //Done
+  const insertHistory = async (
+    applicationId: number 
+  ): Promise<void> => {
+    try {
+      const query = `INSERT INTO ${constants.TABLES.APPLICATION_HISTORY} 
+                (application_id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by) 
+                SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by 
                 FROM ${constants.TABLES.APPLICATION} WHERE id = ?`;
-    await Mysql.query(query, [id]);
-  } catch (e) {
-    logger.error(`Error in insertApplicationHistory: ${generateError(e)}`);
-    throw e;
-  }
-};
-
-/**
- * Updates application details based on the provided UUID.
- */
-export const addApplicationDetails = async (data: ApplicationData): Promise<void> => {
-  try {
-    const query = `UPDATE ${constants.TABLES.APPLICATION} 
-                SET name = ?, phone = ?, address = ?, poc = ?, status = ?, last_updated_by = ?, type = ? 
-                WHERE uuid = ?`;
-    const params = [
-      data.name,
-      data.phone,
-      data.address,
-      data.poc,
-      data.status,
-      data.last_updated_by,
-      data.type,
-      data.uuid,
-    ];
-    const resp = await Mysql.query(query, params);
-    if (resp.data.affectedRows > 0 && data.id) {
-      await insertApplicationHistory(data.id);
+      await Mysql.query(query, [applicationId]);
+    } catch (e) {
+      logger.error(`Error in insertApplicationHistory: ${generateError(e)}`);
+      throw e;
     }
-  } catch (e) {
-    logger.error(`Error in addApplicationDetails: ${generateError(e)}`);
-    throw e;
-  }
-};
+  };
 
-/**
- * Retrieves an application by its ID if its status matches.
- */
-export const getApplicationByID = async (id: number): Promise<ApplicationData | null> => {
-  try {
-    const query = `SELECT * FROM ${constants.TABLES.APPLICATION} 
-                WHERE id = ? AND status = ?`;
-    // TODO: Replace status below if needed.
-    const params = [id, 1];
-    const resp = await Mysql.query(query, params);
-    return resp.data.length ? resp.data[0] : null;
-  } catch (e) {
-    logger.error(`getApplicationByID error: ${generateError(e)}`);
-    throw e;
-  }
-};
-
-/**
- * Searches applications by email.
- */
-export const searchApplications = async (text: string): Promise<ApplicationData[] | null> => {
-  try {
-    const query = `SELECT * FROM ${constants.TABLES.APPLICATION} 
-                WHERE email LIKE ? ORDER BY id DESC`;
-    const params = [`%${text}%`];
-    const resp = await Mysql.query(query, params);
-    return resp.data.length ? resp.data : null;
-  } catch (e) {
-    logger.error(`search error: ${generateError(e)}`);
-    throw e;
-  }
-};
-
-/**
- * Updates the last login time for an application and inserts a history record.
- */
-export const updateApplicationDocuments = async (applicationId: number): Promise<void> => {
-  try {
-    const query = `UPDATE ${constants.TABLES.APPLICATION} 
-                SET last_login_at = ? WHERE id = ?`;
-    const params = [moment().format("YYYY-MM-DD HH:mm:ss"), applicationId];
-    const resp = await Mysql.query(query, params);
-    if (resp.data.affectedRows > 0) {
-      await insertApplicationHistory(applicationId);
+  //Done
+  const getByReferenceNumber = async (reference_number: string): Promise<GetApplicationDataDBResponse> => {
+    try {
+      const query = `SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by FROM ${constants.TABLES.APPLICATION} WHERE reference_number = '?' `;
+      const params = [reference_number];
+      return await Mysql.query<ApplicationData[]>(query, params);
+    } catch (e) {
+      logger.error(`Error in getByReferenceNumber: ${generateError(e)}`);
+      throw e;
     }
-  } catch (e) {
-    logger.error(`Error in updateApplicationDocuments: ${generateError(e)}`);
-    throw e;
-  }
+  };
+
+  //Done
+  const searchSubmittedApplicationsByReferenceNumber = async (reference_number: string, status: number): Promise<GetApplicationDataDBResponse> => {
+    try {
+      const query = `SELECT id FROM ${constants.TABLES.APPLICATION} WHERE reference_number LIKE '%?%' and status = ?`;
+      const params = [reference_number, status];
+      return await Mysql.query<ApplicationData[]>(query, params);
+    } catch (e) {
+      logger.error(`Error in searchSubmittedApplicationsByReferenceNumber: ${generateError(e)}`);
+      throw e;
+    }
+  };
+
+  //Done
+  const updateStatus = async (
+    status: number,
+    applicationId: number,
+    lastUpdatedBy: number
+  ): Promise<any> => {
+    try {
+      const query = `UPDATE ${constants.TABLES.APPLICATION} 
+                SET status = ?, last_updated_by = ? 
+                WHERE id = ?`;
+      const params = [status, lastUpdatedBy, applicationId];
+      const resp = await Mysql.query(query, params);
+      if (resp.data.affectedRows > 0) {
+        insertHistory(applicationId);
+      }
+      return resp
+    } catch (e) {
+      logger.error(`Error in updateStatus: ${generateError(e)}`);
+      throw e;
+    }
+  };
+
+  const updateStep4Data = async (
+    request: AddStep4DataRequest,
+    applicationId: number,
+  ): Promise<any> => {
+    try {
+      const query = `UPDATE ${constants.TABLES.APPLICATION} 
+                SET status = ?, last_updated_by = ?, remarks = ?, dispatch_medium = ?, dispatch_medium_number = ? 
+                WHERE id = ?`;
+      const params = [constants.STATUS.APPLICATION.STEP4_DONE, request.last_updated_by, request.remarks, request.dispatch_medium, request.dispatch_medium_number, applicationId];
+      const resp = await Mysql.query(query, params);
+      if (resp.data.affectedRows > 0) {
+        insertHistory(applicationId);
+      }
+      return resp
+    } catch (e) {
+      logger.error(`Error in updateStep4Data: ${generateError(e)}`);
+      throw e;
+    }
+  };
+
+  return {
+    insertAddStep1Data,
+    getByReferenceNumber,
+    updateStatus,
+    searchSubmittedApplicationsByReferenceNumber,
+    updateStep4Data,
+  };
 };
 
-/**
- * Updates the application status by updating the last login time and inserting a history record.
- */
-export const updateApplicationStatus = async (applicationId: number): Promise<void> => {
-  try {
-    const query = `UPDATE ${constants.TABLES.APPLICATION} 
-                SET last_login_at = ? WHERE id = ?`;
-    const params = [moment().format("YYYY-MM-DD HH:mm:ss"), applicationId];
-    const resp = await Mysql.query(query, params);
-    if (resp.data.affectedRows > 0) {
-      await insertApplicationHistory(applicationId);
-    }
-  } catch (e) {
-    logger.error(`Error in updateApplicationStatus: ${generateError(e)}`);
-    throw e;
-  }
-};
+export default applicationRepository;

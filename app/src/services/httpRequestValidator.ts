@@ -13,7 +13,7 @@ interface ValidationRules {
   [key: string]: any;
 }
 
-interface ErrorResponse {
+export interface ErrorResponse {
   type?: string;
   param: string;
   expected_type?: string;
@@ -89,14 +89,22 @@ const maxValue = (value: any, max: number): boolean => {
   return value <= max;
 };
 
-const multiplePattern = (value: any, validation: { validations: any[] }): boolean => {
+const multiplePattern = (
+  value: any,
+  validation: { validations: any[] }
+): boolean => {
   for (let i = 0; i < validation.validations.length; ++i) {
-    if (!pattern(value, { validations: validation.validations[i] })) return false;
+    if (!pattern(value, { validations: validation.validations[i] }))
+      return false;
   }
   return true;
 };
 
-const generateErrorResponse = (type: string, requestKey: string, targetType?: any): ErrorResponse => {
+const generateErrorResponse = (
+  type: string,
+  requestKey: string,
+  targetType?: any
+): ErrorResponse => {
   const error: ErrorResponse = {
     type,
     param: requestKey,
@@ -121,7 +129,10 @@ const generateErrorResponse = (type: string, requestKey: string, targetType?: an
   return error;
 };
 
-const init = (reqData: any, reqValidation: ValidationSchema): ErrorResponse[] => {
+const init = (
+  reqData: any,
+  reqValidation: ValidationSchema
+): ErrorResponse[] => {
   const errors: ErrorResponse[] = [];
 
   if (!reqValidation) return errors;
@@ -152,7 +163,9 @@ const init = (reqData: any, reqValidation: ValidationSchema): ErrorResponse[] =>
         // Validate the field using the provided rule.
         const isValid = validate(ruleKey, reqData[requestKey], rules[ruleKey]);
         if (!isValid) {
-          errors.push(generateErrorResponse(ruleKey, requestKey, rules[ruleKey]));
+          errors.push(
+            generateErrorResponse(ruleKey, requestKey, rules[ruleKey])
+          );
           break;
         }
       }

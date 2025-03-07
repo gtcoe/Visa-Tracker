@@ -1,22 +1,24 @@
-import {ValidationSchema} from '../interface/request'
+import { ValidationSchema } from "../interface/request";
 
 const add: ValidationSchema = {
-    body: {
-      updated_by_id: {
-        type: "number",
-        required: true,
-      },
-      updated_by: {
-        type: "string",
-        required: true,
-      },
+  body: {
+    token_user_id: {
+      type: "number",
+      required: true,
     },
-    param: {
-      id: {
-        type: "number",
-        required: true,
-      },
+    name: {
+      type: "string",
+      required: true,
     },
-  };
-  
-  export default add;
+    email: {
+      type: "string",
+      required: true,
+    },
+    type: {
+      type: "number",
+      required: true,
+    },
+  },
+};
+
+export default add;

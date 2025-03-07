@@ -36,12 +36,20 @@ class Mysql {
     return result;
   }
 
-  async query<T = any>(sql: string, params: any[] = []): Promise<{ status: boolean; data: T | null }> {
+  async query<T = any>(
+    sql: string,
+    params: any[] = []
+  ): Promise<{ status: boolean; data: T | null }> {
     return new Promise((resolve, reject) => {
       this.pool.query(sql, params, (err: any, results: any) => {
         if (err) {
           reject(this.generateErrorResponse(err));
         } else {
+          if (sql.slice(0, 6) === "insert") {
+            if (!results || typeof results.insertId !== "number") {
+              throw new Error("Unexpected response from database");
+            }
+          }
           resolve({ status: true, data: results });
         }
       });
@@ -70,12 +78,20 @@ class Connection extends Mysql {
     this.connection = connection;
   }
 
-  async query<T = any>(sql: string, params: any[] = []): Promise<{ status: boolean; data: T | null }> {
+  async query<T = any>(
+    sql: string,
+    params: any[] = []
+  ): Promise<{ status: boolean; data: T | null }> {
     return new Promise((resolve, reject) => {
       this.connection.query(sql, params, (err: any, results: any) => {
         if (err) {
           reject(this.generateErrorResponse(err));
         } else {
+          if (sql.slice(0, 6) === "INSERT") {
+            if (!results || typeof results.insertId !== "number") {
+              throw new Error("Unexpected response from database");
+            }
+          }
           resolve({ status: true, data: results });
         }
       });

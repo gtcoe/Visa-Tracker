@@ -1,84 +1,75 @@
-import express, { Request, Response, NextFunction } from "express";
-const controller = require("../controllers/application")();
-const roleAuthMiddleware = require("../middleware/roleAuthMiddleware").init();
-const userRequestValidationConfig = require("../config/request/user");
-const requestValidator = require("../middleware/requestValidatorMiddleware");
-const constants = require("../config/constants");
+import applicationController from "../controllers/application";
+import hasPermission from "../middleware/roleAuthMiddleware";
+import requestValidator from "../middleware/requestValidatorMiddleware";
+import applicationRequestValidationConfig from "../config/request/application";
+import constants from "../config/constants";
+import { express, NextFunction, Router } from "../app";
 
-const applicationRouter = express.Router();
-
-/**
- * Middleware to apply role-based authentication.
- * @param {string[]} roles - Allowed roles for the route.
- */
-
+// Helper middleware to assign role-based permissions
 const withAuth = (roles: number[]) => [
-  (req: any & { type_required?: number[] }, res: any, next: NextFunction) => {
+  (req: any, res: any, next: NextFunction) => {
     req.type_required = roles;
     next();
   },
-  roleAuthMiddleware.hasPermission,
+  hasPermission,
 ];
 
-/**
- * Define application routes
- */
+// Initialize router
+const applicationRouter: Router = express.Router();
 
-// Initiate application
-applicationRouter.post(
-  "/initiate",
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN, constants.USER_TABLE.TYPE.MANAGER]),
-  requestValidator(userRequestValidationConfig.add),
-  controller.create
-);
+applicationRouter
+  .route("/step1")
+  .post(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+    ]),
+    requestValidator(applicationRequestValidationConfig.step1),
+    applicationController.addStep1Data
+  );
 
-// Add details to application
-applicationRouter.post(
-  "/addDetails",
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN, constants.USER_TABLE.TYPE.MANAGER]),
-  requestValidator(userRequestValidationConfig.addDetails),
-  controller.addDetails
-);
+applicationRouter
+  .route("/step2")
+  .post(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+    ]),
+    requestValidator(applicationRequestValidationConfig.step2),
+    applicationController.addStep2Data
+  );
 
-// Update application status
-applicationRouter.post(
-  "/status",
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN, constants.USER_TABLE.TYPE.MANAGER]),
-  requestValidator(userRequestValidationConfig.updateStatus),
-  controller.updateStatus
-);
+// Search users
+//Done
+applicationRouter
+  .route("/searchPax")
+  .post(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+    ]),
+    requestValidator(applicationRequestValidationConfig.searchPax),
+    applicationController.searchPax
+  );
 
-// Upload documents
-applicationRouter.post(
-  "/upload",
-  ...withAuth([constants.USER_TABLE.TYPE.ADMIN, constants.USER_TABLE.TYPE.MANAGER]),
-  requestValidator(userRequestValidationConfig.uploadDocuments),
-  controller.uploadDocuments
-);
+applicationRouter
+  .route("/step4")
+  .post(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+    ]),
+    requestValidator(applicationRequestValidationConfig.step4),
+    applicationController.addStep4Data
+  );
 
-// Search applications
-applicationRouter.post(
-  "/search",
-  ...withAuth([
-    constants.USER_TABLE.TYPE.ADMIN,
-    constants.USER_TABLE.TYPE.MANAGER,
-    constants.USER_TABLE.TYPE.CLIENT,
-  ]),
-  requestValidator(userRequestValidationConfig.search),
-  controller.search
-);
-
-// Get application by ID
-applicationRouter.get(
-  "/:id",
-  ...withAuth([
-    constants.USER_TABLE.TYPE.ADMIN,
-    constants.USER_TABLE.TYPE.MANAGER,
-    constants.USER_TABLE.TYPE.CLIENT,
-  ]),
-  requestValidator(userRequestValidationConfig.getById),
-  controller.getById
-);
+//Done
+applicationRouter
+  .route("/search")
+  .post(
+    ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
+    requestValidator(applicationRequestValidationConfig.search),
+    applicationController.search
+  );
 
 export default applicationRouter;
-

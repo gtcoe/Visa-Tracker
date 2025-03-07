@@ -1,9 +1,13 @@
-import express, { Request, Response, NextFunction, Router } from "express";
-import {signIn, requestNewPassword} from "../controllers/auth"; 
-import { app } from "../app";
+import authController from "../controllers/auth";
+import { app, express, NextFunction, Router } from "../app";
+import requestValidator from "../middleware/requestValidatorMiddleware";
+import authRequestValidationConfig from "../config/request/auth";
 
 const setHeaders = (req: any, res: any, next: NextFunction): void => {
-  res.header("Access-Control-Allow-Headers", "x-access-token, Origin, Content-Type, Accept");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "x-access-token, Origin, Content-Type, Accept"
+  );
   next();
 };
 
@@ -13,7 +17,15 @@ const authRouter: Router = express.Router();
 app.use(setHeaders);
 
 // Public Routes
-authRouter.post("/signin", signIn);
-authRouter.post("/requestNewPassword", requestNewPassword);
+authRouter.post(
+  "/signin",
+  requestValidator(authRequestValidationConfig.signIn),
+  authController.signIn
+);
+authRouter.post(
+  "/requestNewPassword",
+  requestValidator(authRequestValidationConfig.requestNewPassword),
+  authController.requestNewPassword
+);
 
 export default authRouter;

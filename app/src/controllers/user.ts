@@ -1,146 +1,105 @@
 import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
 import { logger } from "../logging";
 import UserService from "../services/user";
 import { generateError } from "../services/util";
 import ResponseModel from "../models/response";
+import {
+  AddUserRequest,
+  convertRequestToAddUserRequest,
+} from "../models/User/addUserRequest";
+import {
+  UpdateUserStatusRequest,
+  convertRequestToUpdateUserStatusRequest,
+} from "../models/User/updateUserStatusRequest";
 
-const userService = new UserService();
+const userService = UserService();
 
-/**
- * Retrieves user information.
- */
-export const get = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const resp = await userService.get();
-
-    if (req.params.id && resp.data) {
-      resp.data = resp.data[0] || {};
-      delete resp.total_pages;
+const UserController = () => {
+  //Done
+  const getAll = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const resp = await userService.getAll();
+      res.send(resp);
+    } catch (e: any) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in get: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
     }
+  };
 
-    response.setStatus(true);
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in get: ${generateError(e)}`);
-    response.message = "Internal Server Error";
-    res.status(500).send(response);
-  }
-};
-
-/**
- * Fetches clients.
- */
-export const fetchClients = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const resp = await userService.fetchClients();
-    response.setStatus(true);
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in fetchClients: ${generateError(e)}`);
-    response.message = "Internal Server Error";
-    res.status(500).send(response);
-  }
-};
-
-/**
- * Adds a new user.
- */
-export const addUser = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const { name, email, status, type, user_id, password } = req.body;
-
-    if (!name || !email || !status || !type || !user_id || !password) {
-      response.message = "Missing required fields.";
-      res.status(400).send(response);
-      return;
+  //Done
+  const getById = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const resp = await userService.getById(Number(req.params.id));
+      res.send(resp);
+    } catch (e: any) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in getById: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
     }
+  };
 
-    const hashedPassword = bcrypt.hashSync(password, 12);
-    const requestData = { name, email, status, type, last_updated_by: user_id, password: hashedPassword };
+  //Done
+  const addUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const request: AddUserRequest = convertRequestToAddUserRequest(req.body);
 
-    const resp = await userService.addUser(requestData);
-    response.setStatus(resp !== null);
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in addUser: ${generateError(e)}`);
-    response.message = "Internal Server Error";
-    res.status(500).send(response);
-  }
-};
-
-/**
- * Adds a new client.
- */
-export const addClient = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const { name, email, phone, status, user_id, type, superpass, address, poc } = req.body;
-
-    if (!name || !email || !status || !user_id || !type) {
-      response.message = "Missing required fields.";
-      res.status(400).send(response);
-      return;
+      const resp = await userService.addUser(request);
+      res.send(resp);
+    } catch (e: any) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in addUser: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
     }
+  };
 
-    const requestData = { name, email, phone, status, last_updated_by: user_id, type, superpass, address, poc };
-    const resp = await userService.create(requestData);
-    response.setStatus(resp !== null);
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in addClient: ${generateError(e)}`);
-    response.message = "Internal Server Error";
-    res.status(500).send(response);
-  }
-};
+  //Done
+  const updateStatus = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const request: UpdateUserStatusRequest =
+        convertRequestToUpdateUserStatusRequest(req.body);
 
-/**
- * Updates the status of a user.
- */
-export const updateStatus = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const { user_id, id, status } = req.body;
-
-    if (!user_id || !id || !status) {
-      response.message = "Missing required fields.";
-      res.status(400).send(response);
-      return;
+      const resp = await userService.updateStatus(request);
+      res.send(resp);
+    } catch (e: any) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in updateStatus: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
     }
+  };
 
-    await userService.updateStatus({ last_updated_by: user_id, user_id: id, status });
-    response.setStatus(true);
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in updateStatus: ${generateError(e)}`);
-    response.message = "Internal Server Error";
-    res.status(500).send(response);
-  }
-};
+  //Done
+  const search = async (req: Request, res: Response): Promise<void> => {
+    const response = new ResponseModel(false);
+    try {
+      const { text } = req.body;
 
-/**
- * Searches for users based on provided text.
- */
-export const search = async (req: Request, res: Response): Promise<void> => {
-  const response = new ResponseModel(false);
-  try {
-    const { text } = req.body;
+      if (!text) {
+        response.message = "Search text is required.";
+        res.status(400).send(response);
+        return;
+      }
 
-    if (!text) {
-      response.message = "Search text is required.";
-      res.status(400).send(response);
-      return;
+      const resp = await userService.search(text);
+      res.send(resp);
+    } catch (e: any) {
+      logger.error(`Error in search: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
     }
+  };
 
-    await userService.search(text);
-    response.setStatus(true);
-    res.send(response);
-  } catch (e: any) {
-    logger.error(`Error in search: ${generateError(e)}`);
-    response.message = "Internal Server Error";
-    res.status(500).send(response);
-  }
+  return {
+    getAll,
+    getById,
+    addUser,
+    updateStatus,
+    search,
+  };
 };
+
+export default UserController();

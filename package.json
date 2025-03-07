@@ -42,8 +42,10 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/formidable": "^3.4.5",
+    "@types/json2xls": "^0.0.0",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/underscore": "^1.13.0"
   }
