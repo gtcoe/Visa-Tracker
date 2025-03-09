@@ -327,10 +327,10 @@ const applicationService = () => {
   return {
     addStep1Data,
     addStep2Data,
-    searchPax,
-    addStep4Data,
-    search,
     addStep3Data,
+    addStep4Data,
+    searchPax,
+    search,
   };
 };
 

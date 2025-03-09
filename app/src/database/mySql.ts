@@ -14,7 +14,6 @@ const mysqlPool: Pool = mysql.createPool({
   connectionLimit: envDBConfig.max, // Max connections
   waitForConnections: true,
   queueLimit: 0,
-  acquireTimeout: envDBConfig.acquire,
   multipleStatements: true, // Allow multiple queries in one statement
 });
 

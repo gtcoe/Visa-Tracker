@@ -12,7 +12,10 @@ asyncHooks
   .createHook({
     init: (asyncId: number, type: string, triggerAsyncId: number) => {
       if (contextMap.has(triggerAsyncId)) {
-        contextMap.set(asyncId, contextMap.get(triggerAsyncId)!);
+        const parentContext = contextMap.get(triggerAsyncId);
+        if (parentContext) {
+          contextMap.set(asyncId, { ...parentContext }); // Copy context
+        }
       }
     },
     destroy: (asyncId: number) => {
@@ -25,7 +28,7 @@ asyncHooks
  * Sets a request context for the current async execution.
  * @param contextObject - The context to store.
  */
-export const setRequestContext = (contextObject: RequestContext): void => {
+const setRequestContext = (contextObject: RequestContext): void => {
   contextMap.set(asyncHooks.executionAsyncId(), contextObject);
 };
 
@@ -33,6 +36,9 @@ export const setRequestContext = (contextObject: RequestContext): void => {
  * Retrieves the request context for the current async execution.
  * @returns The stored context object or `undefined` if not set.
  */
-export const getRequestContext = (): RequestContext | undefined => {
+const getRequestContext = (): RequestContext | undefined => {
   return contextMap.get(asyncHooks.executionAsyncId());
 };
+
+// ✅ Use ES module export
+export { setRequestContext, getRequestContext };

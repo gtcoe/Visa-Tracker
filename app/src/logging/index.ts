@@ -1,10 +1,20 @@
 import { createLogger, format, transports } from "winston";
 import fs from "fs";
 import path from "path";
-import asyncHook from "../hooks/asyncHooks";
+import {setRequestContext, getRequestContext} from "../hooks/asyncHooks";
 import { generateRandomString } from "../services/util";
 
-// Define Log Directory
+// // Manually define `__dirname` in ES modules
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// // Define Log Directory
+// const logDir: string = process.env.LOG_DIR || path.join(__dirname, "../logs");
+
+
+// Manually define `__dirname` in ES modules
+const __filename = process.cwd()
+const __dirname = path.dirname(__filename);
+
 const logDir: string = process.env.LOG_DIR || path.join(__dirname, "../logs");
 
 // Ensure log directory exists
@@ -25,7 +35,7 @@ const getLogString = (info: any): string => {
     requestId = "",
     userId = "",
     userType = "",
-  }: LogContext = asyncHook.getRequestContext() || {};
+  }: LogContext = getRequestContext() || {};
   const contextInfo: string[] = [];
 
   if (requestId) contextInfo.push(`[REQUEST_ID: ${requestId}]`);
@@ -79,7 +89,7 @@ const setContextForLog = ({
   userType = "NO_TYPE",
   userId = "NO_ID",
 }: LogContext): void => {
-  asyncHook.setRequestContext({ requestId, userType, userId });
+  setRequestContext({ requestId, userType, userId });
 };
 
 // Export logger & context setter

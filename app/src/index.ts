@@ -6,7 +6,7 @@ import json2xls from "json2xls";
 // import AWS from "aws-sdk";
 import MySql from "./database/mySql";
 import { logger } from "./logging";
-const asyncHooks = require("./hooks/asyncHooks");
+import {setRequestContext, getRequestContext} from "./hooks/asyncHooks";
 
 // import s3Config from "./app/config/s3BucketConfig";
 
@@ -33,7 +33,7 @@ const setupMiddleware = (app: Application) => {
   app.set("port", PORT);
 
   app.use((req: any, res: any, next: NextFunction) => {
-    asyncHooks.setRequestContext({
+    setRequestContext({
       requestId: "abc", // todo: generate random string
       endpoint: req.originalUrl,
     });
@@ -92,10 +92,15 @@ const keepDatabaseAlive = async () => {
 const startServer = () => {
   setupMiddleware(app);
   // configureAWS();
-  require("./routes")();
-
-  setInterval(keepDatabaseAlive, 5000);
-
+  // require("./routes")();
+  // import("./routes").then((module) => module.default());
+  // const routes =  import("./routes");
+  // routes.default();
+  // setInterval(keepDatabaseAlive, 5000);
+  import("./routes").then((module) => {
+    const routes = module.default; // Get the exported Express app
+    app.use("/api", routes); // Mount it on the main Express app
+  });
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
   });

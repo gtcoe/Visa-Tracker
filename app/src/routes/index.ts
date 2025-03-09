@@ -4,7 +4,8 @@ import userRouter from "./user";
 import clientRouter from "./client";
 import applicationRouter from "./application";
 import authRouter from "./auth";
-import { app } from "../app";
+import { Router } from "express";
+const app = Router(); 
 
 // Apply route configurations
 app.use(routerConfig.USER_ROUTE, verifyToken, userRouter);
