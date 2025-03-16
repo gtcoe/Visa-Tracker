@@ -96,11 +96,12 @@ const startServer = () => {
   // import("./routes").then((module) => module.default());
   // const routes =  import("./routes");
   // routes.default();
-  // setInterval(keepDatabaseAlive, 5000);
-  import("./routes").then((module) => {
-    const routes = module.default; // Get the exported Express app
-    app.use("/api", routes); // Mount it on the main Express app
-  });
+  setInterval(keepDatabaseAlive, 5000);
+  
+  // Use require for CommonJS modules
+  const routes = require("./routes");
+  app.use("/api", routes.default);
+  
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
   });

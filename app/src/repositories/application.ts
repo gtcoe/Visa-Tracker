@@ -21,8 +21,8 @@ export interface ApplicationData {
   travel_date?: string;
   interview_date?: string;
   file_number_2?: string;
-  is_travel_date_tentative?: boolean;
-  priority_submission?: boolean;
+  is_travel_date_tentative?: number;
+  priority_submission?: number;
   status: number;
   queue: number;
   external_status?: number;
@@ -51,7 +51,7 @@ const applicationRepository = () => {
     try {
       const query = `INSERT INTO ${constants.TABLES.APPLICATION} 
                 (pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, status, last_updated_by, reference_number) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       const params = [
         data.pax_type,
         data.country_of_residence,
@@ -96,7 +96,7 @@ const applicationRepository = () => {
   //Done
   const getByReferenceNumber = async (reference_number: string): Promise<GetApplicationDataDBResponse> => {
     try {
-      const query = `SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by FROM ${constants.TABLES.APPLICATION} WHERE reference_number = '?' `;
+      const query = `SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by FROM ${constants.TABLES.APPLICATION} WHERE reference_number = ? `;
       const params = [reference_number];
       return await Mysql.query<ApplicationData[]>(query, params);
     } catch (e) {
@@ -104,6 +104,18 @@ const applicationRepository = () => {
       throw e;
     }
   };
+
+    //Done
+    const getById = async (id: number): Promise<GetApplicationDataDBResponse> => {
+      try {
+        const query = `SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by FROM ${constants.TABLES.APPLICATION} WHERE id = ? `;
+        const params = [id];
+        return await Mysql.query<ApplicationData[]>(query, params);
+      } catch (e) {
+        logger.error(`Error in getById: ${generateError(e)}`);
+        throw e;
+      }
+    };
 
   //Done
   const searchSubmittedApplicationsByReferenceNumber = async (reference_number: string, status: number): Promise<GetApplicationDataDBResponse> => {
@@ -162,6 +174,7 @@ const applicationRepository = () => {
   return {
     insertAddStep1Data,
     getByReferenceNumber,
+    getById,
     updateStatus,
     searchSubmittedApplicationsByReferenceNumber,
     updateStep4Data,

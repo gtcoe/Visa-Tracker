@@ -5,9 +5,14 @@
   "main": "server.ts",
   "scripts": {
     "tsc": "tsc",
+    "build": "tsc -p app/tsconfig.json",
     "dev2": "ts-node-dev app/src/index",
     "dev3": "ts-node-dev --respawn --transpile-only app/src/index.ts",
     "dev": "tsx app/src/index.ts",
+    "debug": "ts-node --inspect app/src/index.ts",
+    "debug:alt": "tsx --inspect app/src/index.ts",
+    "debug:nodemon": "nodemon",
+    "debug:js": "tsc -p app/tsconfig.json && node --inspect app/build/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -46,8 +51,9 @@
     "dotenv": "^16.0.3",
     "morgan": "^1.10.0",
     "mysql2": "^3.2.0",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.19.3"
   },
-  "type": "module"
+  "type": "commonjs"
 }

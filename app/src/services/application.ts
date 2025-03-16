@@ -25,6 +25,8 @@ import { AddStep3DataRequest } from "../models/Application/addStep3DataRequest";
 import { AddStep4DataRequest } from "../models/Application/addStep4DataRequest";
 import { SearchPaxRequest } from "../models/Application/searchPax";
 import { SearchRequest } from "../models/Application/tracker";
+import MySql from "../database/mySql";
+import ResponseModel from "../models/response";
 
 const applicationService = () => {
   const applicationRepository = ApplicationRepository();
@@ -71,6 +73,10 @@ const applicationService = () => {
       }
 
       response.setStatus(true);
+      response.data = {
+        "application_id": resp.data?.insertId,
+        "reference_number": request.reference_number,
+      }
       return response;
     } catch (e) {
       logger.error(
@@ -112,14 +118,14 @@ const applicationService = () => {
 
       /// Fetch Application data
       const applicationResponse: GetApplicationDataDBResponse =
-        await applicationRepository.getByReferenceNumber(
-          request.reference_number
+        await applicationRepository.getById(
+          request.application_id
         );
 
       // Error Fetching passengerInfo
       if (!applicationResponse || !applicationResponse.status) {
         throw new Error(
-          `unable to fetch application info by reference_number: ${request.reference_number}`
+          `unable to fetch application info by reference_number: ${request.application_id}`
         );
       }
 
@@ -128,11 +134,12 @@ const applicationService = () => {
         : null;
       if (applicationInfo == null) {
         response.setMessage(
-          `Invalid application reference_number: ${request.reference_number}`
+          `Invalid application_id: ${request.application_id}`
         );
         return response;
       }
 
+      // TODO: Add this once the status check is done in the frontend
       // if (applicationInfo.status !== constants.STATUS.APPLICATION.STEP1_DONE) {
       //   response.setMessage(`Application with ID: ${request.reference_number} is currently on wrong status: ${applicationInfo.status}`);
       //   return response;
@@ -311,16 +318,221 @@ const applicationService = () => {
     }
   };
 
-  const addStep3Data = async (request: AddStep4DataRequest): Promise<any> => {
-    const response = new Response(false);
+  const addStep3Data = async (
+    request: AddStep3DataRequest
+  ): Promise<ResponseModel> => {
+    const response = new ResponseModel(false);
+    let connection: any;
+    
     try {
+      connection = await MySql.getConnection();
+      await connection.beginTransaction();
+      
+      const { personal_info, passport_info, travel_info, visa_requests, address_info, mi_fields, application_id } = request;
+      
+      // Generate a single reference number for all visa requests
+      const referenceNumber = Math.floor(100000 + Math.random() * 900000); // 6-digit reference number
+      
+      // Update the main application with personal, passport, and travel info
+      const updateMainApplicationQuery = `
+        UPDATE applications 
+        SET 
+          first_name = ?,
+          last_name = ?,
+          email = ?,
+          date_of_birth = ?,
+          processing_branch = ?,
+          passport_number = ?,
+          passport_issue_date = ?,
+          passport_expiry_date = ?,
+          passport_issue_place = ?,
+          expired_passports_count = ?,
+          expired_passport_number = ?,
+          travel_date = ?,
+          interview_date = ?,
+          file_number = ?,
+          is_travel_date_tentative = ?,
+          priority_submission = ?,
+          reference_number = ?,
+          address_line1 = ?,
+          address_line2 = ?,
+          country = ?,
+          state = ?,
+          city = ?,
+          zip_code = ?,
+          occupation = ?,
+          position = ?,
+          mi_fields = ?,
+          updated_at = NOW()
+        WHERE id = ?`;
+      
+      const updateMainApplicationParams = [
+        personal_info.first_name,
+        personal_info.last_name,
+        personal_info.email_id,
+        personal_info.date_of_birth,
+        personal_info.processing_branch,
+        passport_info.passport_number,
+        passport_info.date_of_issue,
+        passport_info.date_of_expiry,
+        passport_info.issue_at,
+        passport_info.no_of_expired_passport,
+        passport_info.expired_passport_number,
+        travel_info.travel_date,
+        travel_info.interview_date,
+        travel_info.file_no,
+        travel_info.is_travel_date_tentative,
+        travel_info.priority_submission,
+        referenceNumber,
+        address_info.address_line1,
+        address_info.address_line2 || '',
+        address_info.country,
+        address_info.state,
+        address_info.city,
+        address_info.zip,
+        address_info.occupation,
+        address_info.position,
+        mi_fields?.olvt_number,
+        application_id
+      ];
+      
+      const mainApplicationResult = await connection.query(
+        updateMainApplicationQuery, 
+        updateMainApplicationParams
+      );
+      
+      // If there's only one visa request, just update the main application
+      if (visa_requests.length === 1) {
+        const updateVisaRequestQuery = `
+          UPDATE applications 
+          SET 
+            visa_country = ?,
+            visa_category = ?,
+            nationality = ?,
+            state_id = ?,
+            entry_type = ?,
+            remarks = ?
+          WHERE id = ?`;
+        
+        const updateVisaRequestParams = [
+          visa_requests[0].visa_country,
+          visa_requests[0].visa_category,
+          visa_requests[0].nationality,
+          visa_requests[0].state,
+          visa_requests[0].entry_type,
+          visa_requests[0].remark || '',
+          application_id
+        ];
+        
+        await connection.query(updateVisaRequestQuery, updateVisaRequestParams);
+      } else {
+        // If there are multiple visa requests, first update the main application with first request
+        const updateFirstVisaRequestQuery = `
+          UPDATE applications 
+          SET 
+            visa_country = ?,
+            visa_category = ?,
+            nationality = ?,
+            state_id = ?,
+            entry_type = ?,
+            remarks = ?
+          WHERE id = ?`;
+        
+        const updateFirstVisaRequestParams = [
+          visa_requests[0].visa_country,
+          visa_requests[0].visa_category,
+          visa_requests[0].nationality,
+          visa_requests[0].state,
+          visa_requests[0].entry_type,
+          visa_requests[0].remark || '',
+          application_id
+        ];
+        
+        await connection.query(updateFirstVisaRequestQuery, updateFirstVisaRequestParams);
+        
+        // Then create additional applications for the remaining visa requests
+        const getApplicationDataQuery = `SELECT * FROM applications WHERE id = ?`;
+        const [applicationData] = (await connection.query(getApplicationDataQuery, [application_id])).data;
+        
+        // Create new applications for each additional visa request
+        for (let i = 1; i < visa_requests.length; i++) {
+          const createApplicationQuery = `
+            INSERT INTO applications (
+              first_name, last_name, email, date_of_birth, processing_branch,
+              passport_number, passport_issue_date, passport_expiry_date, passport_issue_place,
+              expired_passports_count, expired_passport_number, travel_date, interview_date,
+              file_number, is_travel_date_tentative, priority_submission, reference_number,
+              address_line1, address_line2, country, state, city, zip_code, occupation, position,
+              visa_country, visa_category, nationality, state_id, entry_type, remarks,
+              mi_fields, status
+            ) VALUES (
+              ?, ?, ?, ?, ?, 
+              ?, ?, ?, ?,
+              ?, ?, ?, ?,
+              ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?,
+              ?, ?
+            )`;
+          
+          const createApplicationParams = [
+            personal_info.first_name,
+            personal_info.last_name,
+            personal_info.email_id,
+            personal_info.date_of_birth,
+            personal_info.processing_branch,
+            passport_info.passport_number,
+            passport_info.date_of_issue,
+            passport_info.date_of_expiry,
+            passport_info.issue_at,
+            passport_info.no_of_expired_passport,
+            passport_info.expired_passport_number,
+            travel_info.travel_date,
+            travel_info.interview_date,
+            travel_info.file_no,
+            travel_info.is_travel_date_tentative,
+            travel_info.priority_submission,
+            referenceNumber, // Same reference number for all applications
+            address_info.address_line1,
+            address_info.address_line2 || '',
+            address_info.country,
+            address_info.state,
+            address_info.city,
+            address_info.zip,
+            address_info.occupation,
+            address_info.position,
+            visa_requests[i].visa_country,
+            visa_requests[i].visa_category,
+            visa_requests[i].nationality,
+            visa_requests[i].state,
+            visa_requests[i].entry_type,
+            visa_requests[i].remark || '',
+            mi_fields?.olvt_number,
+            applicationData.status || 1
+          ];
+          
+          await connection.query(createApplicationQuery, createApplicationParams);
+        }
+      }
+      
+      await connection.commit();
+      
       response.setStatus(true);
+      response.message = "Application step 3 data saved successfully";
+      response.data = {
+        application_id,
+        reference_number: referenceNumber,
+        visa_requests_count: visa_requests.length
+      };
+      
       return response;
     } catch (e) {
-      logger.error(
-        `error in applicationService.addStep3Data - ${generateError(e)}`
-      );
-      throw e;
+      if (connection) await connection.rollback();
+      logger.error(`Error in ApplicationService.addStep3Data: ${generateError(e)}`);
+      response.message = "Failed to save application step 3 data";
+      return response;
+    } finally {
+      if (connection) connection.release();
     }
   };
 

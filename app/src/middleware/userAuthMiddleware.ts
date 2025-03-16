@@ -69,18 +69,19 @@ const verifyToken = async (
     }
 
     // Attach user details to res.locals (best practice)
-    res.locals.user = {
-      token_user_id: userInfo.id,
+    req.body = {
+      ...req.body,
+      token_user_id: decoded.user_id,
       token_user_type: userInfo.type,
       token_user_name: userInfo.name,
-      token_useremail: userInfo.email,
+      token_user_email: userInfo.email,
     };
 
     // Set userInfo context in async hooks
     const reqContext = getRequestContext();
     setRequestContext({
       ...reqContext,
-      user_id: userInfo.id,
+      user_id: decoded.user_id,
       type: userInfo.type,
     });
 

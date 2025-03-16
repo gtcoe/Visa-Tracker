@@ -17,7 +17,8 @@ const requestValidator = (fields: ValidationFields): RequestHandler => {
   return (req: any, res: any, next: NextFunction): void => {
     const response = new ResponseModel(false);
     const validationErrors: ErrorResponse[] = [];
-
+    console.log("===>fields", fields);
+    console.log("===>req", req.params);
     // Validate query, params, and body if provided
     Object.entries(fields).forEach(([key, rules]) => {
       if (rules && typeof rules === "object" && Object.keys(rules).length) {

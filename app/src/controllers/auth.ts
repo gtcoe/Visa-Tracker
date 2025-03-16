@@ -52,9 +52,8 @@ const AuthController = () => {
       }
 
       // Call service method to request new password
-      await authService.requestNewPassword(email);
-      response.setStatus(true);
-      res.send(response);
+      const resp = await authService.requestNewPassword(email);
+      res.send(resp);
     } catch (e) {
       logger.error(
         `Error in AuthController.requestNewPassword: ${generateError(e)}`

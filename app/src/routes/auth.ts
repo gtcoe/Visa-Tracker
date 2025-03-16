@@ -15,7 +15,6 @@ const authRouter: Router = express.Router();
 
 // Apply headers middleware globally
 app.use(setHeaders);
-console.log(`🚀 2`);
 
 // Public Routes
 authRouter.post(

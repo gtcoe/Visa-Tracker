@@ -3,7 +3,7 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
 interface AuthRequest extends Request {
   type_required?: number[]; // Assuming it's an array of allowed types
   body: {
-    user_type: number; // The type of request being checked
+    token_user_type: number; // The type of request being checked
   };
 }
 
@@ -21,7 +21,7 @@ const hasPermission: RequestHandler = async (
     });
   }
 
-  if (req.type_required.includes(req.body.user_type)) {
+  if (req.type_required.includes(req.body.token_user_type)) {
     return next();
   }
 

@@ -57,6 +57,9 @@ export interface ValidationSchema {
     country?: FieldConfig;
     billing_to_company?: FieldConfig;
     queue?: FieldConfig;
+    city?: FieldConfig;
+    zip_code?: FieldConfig;
+    state?: FieldConfig;
   };
   param?: {
     id?: FieldConfig;

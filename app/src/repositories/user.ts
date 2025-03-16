@@ -57,8 +57,8 @@ const userRepository = () => {
   ): Promise<void> => {
     try {
       const query = `INSERT INTO ${constants.TABLES.USER_HISTORY} 
-                (user_id, name, email, password, status, last_updated_by, type, password_valid_till, last_signed_in_at, password_requested) 
-                SELECT id, name, email, password, status, last_updated_by, type, password_valid_till, last_signed_in_at, password_requested 
+                (user_id, name, email, password, status, last_updated_by, type, password_valid_till, last_logged_in_at, password_requested) 
+                SELECT id, name, email, password, status, last_updated_by, type, password_valid_till, last_logged_in_at, password_requested 
                 FROM ${constants.TABLES.USER} WHERE id = ?`;
       await Mysql.query(query, [userId]);
     } catch (e) {
@@ -129,7 +129,7 @@ const userRepository = () => {
   //Done
   const getAll = async (): Promise<GetUserDataDBResponse> => {
     try {
-      const query = `SELECT id, name, email, password, status, type, password_requested, last_updated_by, password_valid_till FROM ${constants.TABLES.USER} order by id desc`;
+      const query = `SELECT id, name, email, status, type FROM ${constants.TABLES.USER} order by id desc`;
       return await Mysql.query<UserData[]>(query, []);
     } catch (e) {
       logger.error(`Error in getAllUsers: ${generateError(e)}`);
@@ -142,7 +142,7 @@ const userRepository = () => {
     email: string
   ): Promise<GetUserDataDBResponse> => {
     try {
-      const query = `SELECT id, name, email, password, status, type, password_requested, last_updated_by, password_valid_till  FROM ${constants.TABLES.USER} WHERE email = '?' ORDER BY id DESC LIMIT 1`;
+      const query = `SELECT id, name, email, password, status, type, password_requested, last_updated_by, password_valid_till  FROM ${constants.TABLES.USER} WHERE email = ? ORDER BY id DESC LIMIT 1`;
       const params = [email];
       return await Mysql.query<UserData[]>(query, params);
     } catch (e) {
@@ -154,7 +154,7 @@ const userRepository = () => {
   //Done
   const search = async (text: string): Promise<GetUserDataDBResponse> => {
     try {
-      const query = `SELECT id, name, email, status, type FROM ${constants.TABLES.USER} WHERE email LIKE '?' ORDER BY id DESC`;
+      const query = `SELECT id, name, email, status, type FROM ${constants.TABLES.USER} WHERE email LIKE ? ORDER BY id DESC`;
       const params = [`%${text}%`];
       return await Mysql.query<UserData[]>(query, params);
     } catch (e) {

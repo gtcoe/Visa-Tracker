@@ -12,6 +12,10 @@ export type AddClientRequest = {
   spoke_phone: string;
   spoke_email: string;
   billing_cycle: string;
+  country: number;
+  state: number;
+  city: string;
+  zip_code: string;
   last_updated_by: number;
 };
 
@@ -31,4 +35,8 @@ export const convertRequestToAddClientRequest = (
   spoke_email: String(request.spoke_email),
   billing_cycle: String(request.billing_cycle),
   last_updated_by: Number(request.token_user_id),
+  country: Number(request.country),
+  state: Number(request.state),
+  city: String(request.city),
+  zip_code: String(request.zip_code),
 });

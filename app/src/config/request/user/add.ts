@@ -1,4 +1,5 @@
 import { ValidationSchema } from "../interface/request";
+import constants from "../../constants";
 
 const add: ValidationSchema = {
   body: {
@@ -17,6 +18,14 @@ const add: ValidationSchema = {
     type: {
       type: "number",
       required: true,
+      minValue: constants.USER_TABLE.TYPE.ADMIN,
+      maxValue: constants.USER_TABLE.TYPE.MANAGER,
+    },
+    status: {
+      type: "number",
+      required: true,
+      minValue: constants.STATUS.USER.ACTIVE,
+      maxValue: constants.STATUS.USER.INACTIVE,
     },
   },
 };

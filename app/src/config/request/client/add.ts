@@ -1,10 +1,17 @@
 import { ValidationSchema } from "../interface/request";
+import constants from "../../constants";
 
 const add: ValidationSchema = {
   body: {
     token_user_id: {
       type: "number",
       required: true,
+    },
+    type: {
+      type: "number",
+      required: true,
+      minValue: constants.CLIENTS_TABLE.TYPE.AGENT,
+      maxValue: constants.CLIENTS_TABLE.TYPE.CORPORATE,
     },
     full_name: {
       type: "string",
@@ -47,6 +54,22 @@ const add: ValidationSchema = {
       required: true,
     },
     billing_cycle: {
+      type: "string",
+      required: true,
+    },
+    country: {
+      type: "number",
+      required: true,
+    },
+    state: {
+      type: "number",
+      required: true,
+    },
+    city: {
+      type: "string",
+      required: true,
+    },
+    zip_code: {
       type: "string",
       required: true,
     },

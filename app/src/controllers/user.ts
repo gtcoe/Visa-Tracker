@@ -30,11 +30,16 @@ const UserController = () => {
 
   //Done
   const getById = async (req: Request, res: Response): Promise<void> => {
+    const response = new ResponseModel(false);
     try {
+      if (!req.params.id) {
+        response.message = "User ID is required.";
+        res.status(400).send(response);
+        return;
+      }
       const resp = await userService.getById(Number(req.params.id));
       res.send(resp);
     } catch (e: any) {
-      const response = new ResponseModel(false);
       logger.error(`Error in getById: ${generateError(e)}`);
       response.message = "Internal Server Error";
       res.status(500).send(response);

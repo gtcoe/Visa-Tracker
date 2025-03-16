@@ -2,14 +2,14 @@ const constants = {
   TABLES: {
     ROLE: "role",
     ROLE_HISTORY: "role_history",
-    USER: "user",
-    USER_HISTORY: "user_history",
-    APPLICATION: "application",
-    APPLICATION_HISTORY: "application_history",
-    CLIENT: "client",
-    CLIENT_HISTORY: "client_history",
-    PASSENGER: "passenger",
-    PASSENGER_HISTORY: "passenger_history",
+    USER: "users",
+    USER_HISTORY: "users_history",
+    APPLICATION: "applications",
+    APPLICATION_HISTORY: "applications_history",
+    CLIENT: "clients",
+    CLIENT_HISTORY: "clients_history",
+    PASSENGER: "passengers",
+    PASSENGER_HISTORY: "passengers_history",
     APPLICATION_PASSENGER_MAPPING: "/application_passenger_mapping",
     APPLICATION_PASSENGER_MAPPING_HISTORY:
       "/application_passenger_mapping_history",
@@ -56,6 +56,13 @@ const constants = {
     PASSWORD_REQUESTED: {
       NO: 0,
       YES: 1,
+    },
+  },
+  CLIENTS_TABLE: {
+    TYPE: {
+      DEFAULT: 0,
+      AGENT: 1,
+      CORPORATE: 2,
     },
   },
 

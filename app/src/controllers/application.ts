@@ -15,6 +15,13 @@ import {
   AddStep4DataRequest,
   convertRequestToAddStep4DataRequest,
 } from "../models/Application/addStep4DataRequest";
+
+import {
+  AddStep3DataRequest,
+  convertRequestToAddStep3DataRequest,
+} from "../models/Application/addStep3DataRequest";
+
+
 import {
   SearchPaxRequest,
   convertRequestToSearchPaxRequestt,
@@ -129,12 +136,31 @@ const ApplicationController = () => {
     }
   };
 
+  const addStep3Data = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const request: AddStep3DataRequest = convertRequestToAddStep3DataRequest(
+          req.body
+        );
+  
+
+      const resp = await applicationService.addStep3Data(request);
+      
+      res.send(resp);
+    } catch (e: any) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in addStep3Data: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
+    }
+  };
+
   return {
     addStep1Data,
     addStep2Data,
     searchPax,
     addStep4Data,
     search,
+    addStep3Data,
   };
 };
 

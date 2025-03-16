@@ -39,6 +39,17 @@ applicationRouter
     applicationController.addStep2Data
   );
 
+applicationRouter
+  .route("/step3")
+  .post(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+    ]),
+    requestValidator(applicationRequestValidationConfig.step3),
+    applicationController.addStep3Data
+  );
+
 // Search users
 //Done
 applicationRouter

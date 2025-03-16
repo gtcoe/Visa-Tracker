@@ -69,10 +69,18 @@ const userService = () => {
         throw new Error("unable to fetch user info by userID");
       }
 
+      const userInfo = userResponse.data ? userResponse.data[0] : null
+      const userResponseData = {
+        id: userInfo?.id,
+        name: userInfo?.name,
+        email: userInfo?.email,
+        status: userInfo?.status,
+        type: userInfo?.type,
+      }
       response.setStatus(true);
       response.setData(
         "user_info",
-        userResponse.data ? userResponse.data[0] : null
+        userResponseData
       );
       return response;
     } catch (e) {
@@ -129,6 +137,7 @@ const userService = () => {
 
       // Generate a random password.
       const password = generateRandomString(12);
+      console.log("====>password",request.email, password);
       request.password = bcrypt.hashSync(password, 15);
       request.password_valid_till = moment(new Date())
         .add(30, "days")

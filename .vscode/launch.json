@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Current TS File",
+      "type": "node",
+      "request": "launch",
+      "program": "${file}",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "sourceMaps": true
+    },
+    {
+      "name": "Debug Main TS File",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/src/index.ts",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "sourceMaps": true
+    },
+    {
+      "name": "Debug Compiled JS",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/build/index.js",
+      "preLaunchTask": "tsc: build - app/tsconfig.json",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "outFiles": ["${workspaceFolder}/app/build/**/*.js"],
+      "sourceMaps": true
+    }
+  ]
+} 

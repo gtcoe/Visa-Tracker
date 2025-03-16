@@ -15,7 +15,7 @@ const MySqlConfig: { dev: DbConfig; prod: DbConfig } = {
     HOST: "127.0.0.1",
     USER: "root",
     PASSWORD: "gungun1459",
-    DB: "a",
+    DB: "visaistic",
     port: 3306,
     max: 50,
     min: 0,

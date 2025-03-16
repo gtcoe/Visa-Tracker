@@ -55,7 +55,6 @@ const authService = () => {
       if (!userInfo) {
         response.setStatusCode(400);
         response.setMessage(constants.SIGN_IN_STATUS_MESSAGE.EMAIL_NOT_FOUND);
-        response.setData("type", constants.SIGN_IN_STATUS_TYPE.EMAIL_NOT_FOUND);
         return response;
       }
 
