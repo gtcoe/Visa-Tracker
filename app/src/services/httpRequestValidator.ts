@@ -9,6 +9,8 @@ interface ValidationRules {
   minLength?: number;
   maxLength?: number;
   pattern?: { validations: any };
+  items?: ValidationRules; // For array item validation
+  properties?: { [key: string]: ValidationRules }; // For object property validation
   // You can extend this interface if additional rules are needed.
   [key: string]: any;
 }
@@ -32,6 +34,8 @@ const skipAble: Record<string, number> = {
   maxValue: 1,
   minLength: 1,
   maxLength: 1,
+  items: 1,
+  properties: 1,
 };
 
 const validate = (method: string, value: any, rule: any): boolean => {
@@ -52,16 +56,42 @@ const validate = (method: string, value: any, rule: any): boolean => {
       return maxLength(value, rule);
     case "pattern":
       return pattern(value, rule);
+    case "items":
+      return validateArrayItems(value, rule);
     default:
       return true;
   }
 };
 
 const validateDataType = (value: any, expected: string): boolean => {
+  if (expected === "array") {
+    return Array.isArray(value);
+  }
   return typeof value === expected;
 };
 
+const validateArrayItems = (value: any, itemRules: ValidationRules): boolean => {
+  if (!Array.isArray(value)) return false;
+  
+  // If no items are defined, any array is valid
+  if (!itemRules) return true;
+  
+  // Check each item in the array against the item rules
+  for (const item of value) {
+    for (const ruleKey of Object.keys(itemRules)) {
+      if (!validate(ruleKey, item, itemRules[ruleKey])) {
+        return false;
+      }
+    }
+  }
+  
+  return true;
+};
+
 const length = (value: any, len: number): boolean => {
+  if (Array.isArray(value)) {
+    return value.length === len;
+  }
   return value.toString().length === len;
 };
 
@@ -74,10 +104,16 @@ const pattern = (value: any, validation: { validations: any }): boolean => {
 };
 
 const minLength = (value: any, len: number = 1): boolean => {
+  if (Array.isArray(value)) {
+    return value.length >= len;
+  }
   return value.toString().trim().length >= len;
 };
 
 const maxLength = (value: any, len: number = 1): boolean => {
+  if (Array.isArray(value)) {
+    return value.length <= len;
+  }
   return value.toString().trim().length <= len;
 };
 
@@ -124,6 +160,9 @@ const generateErrorResponse = (
   } else if (type === "maxValue") {
     delete error.type;
     error.message = `Maximum value can be ${targetType} for ${requestKey}`;
+  } else if (type === "items") {
+    delete error.type;
+    error.message = `Invalid items in array for ${requestKey}`;
   }
 
   return error;
@@ -147,27 +186,50 @@ const init = (
       continue;
     }
 
-    // Process nested objects if the rule value is an object and not one of the skipAble keys.
-    const ruleKeys = Object.keys(rules);
+    // Special handling for required rule - check this first
+    if (rules.required && (reqData[requestKey] === undefined || reqData[requestKey] === null)) {
+      errors.push(generateErrorResponse("required", requestKey));
+      continue;
+    }
+
+    // Skip further validation if the field is not present and not required
+    if ((reqData[requestKey] === undefined || reqData[requestKey] === null) && !rules.required) {
+      continue;
+    }
+
+    // Check the type if specified
+    if (rules.type) {
+      if (!validateDataType(reqData[requestKey], rules.type)) {
+        errors.push(generateErrorResponse("type", requestKey, rules.type));
+        continue;
+      }
+
+      // If it's an array type and has item validation, check each item
+      if (rules.type === "array" && rules.items && Array.isArray(reqData[requestKey])) {
+        for (let i = 0; i < reqData[requestKey].length; i++) {
+          const itemErrors = init(reqData[requestKey][i], { item: rules.items });
+          if (itemErrors.length > 0) {
+            errors.push(generateErrorResponse("items", `${requestKey}[${i}]`));
+            break;
+          }
+        }
+        continue;
+      }
+    }
+
+    // Process nested objects if the rule has properties
+    if (rules.properties && typeof reqData[requestKey] === "object" && !Array.isArray(reqData[requestKey])) {
+      errors.push(...init(reqData[requestKey], rules.properties));
+      continue;
+    }
+
+    // Process the remaining validation rules
+    const ruleKeys = Object.keys(rules).filter(key => !['type', 'required', 'properties', 'items'].includes(key));
     for (const ruleKey of ruleKeys) {
-      if (!skipAble[ruleKey] && typeof rules === "object") {
-        // Recursively validate nested data.
-        errors.push(...init(reqData[requestKey], rules));
+      const isValid = validate(ruleKey, reqData[requestKey], rules[ruleKey]);
+      if (!isValid) {
+        errors.push(generateErrorResponse(ruleKey, requestKey, rules[ruleKey]));
         break;
-      } else {
-        // If field is missing, push a required error.
-        if (reqData[requestKey] === undefined || reqData[requestKey] === null) {
-          errors.push(generateErrorResponse("required", requestKey));
-          break;
-        }
-        // Validate the field using the provided rule.
-        const isValid = validate(ruleKey, reqData[requestKey], rules[ruleKey]);
-        if (!isValid) {
-          errors.push(
-            generateErrorResponse(ruleKey, requestKey, rules[ruleKey])
-          );
-          break;
-        }
       }
     }
   }
