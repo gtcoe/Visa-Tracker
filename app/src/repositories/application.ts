@@ -178,6 +178,7 @@ const applicationRepository = () => {
     updateStatus,
     searchSubmittedApplicationsByReferenceNumber,
     updateStep4Data,
+    insertHistory
   };
 };
 

@@ -78,9 +78,41 @@ const validateArrayItems = (value: any, itemRules: ValidationRules): boolean => 
   
   // Check each item in the array against the item rules
   for (const item of value) {
-    for (const ruleKey of Object.keys(itemRules)) {
-      if (!validate(ruleKey, item, itemRules[ruleKey])) {
+    // If the item should be an object with properties
+    if (itemRules.type === 'object' && itemRules.properties) {
+      // Check if the item is an object
+      if (typeof item !== 'object' || item === null || Array.isArray(item)) {
         return false;
+      }
+      
+      // Validate each property of the object
+      for (const propKey of Object.keys(itemRules.properties)) {
+        const propRules = itemRules.properties[propKey];
+        
+        // Check if property is required but missing
+        if (propRules.required && (item[propKey] === undefined || item[propKey] === null)) {
+          return false;
+        }
+        
+        // Skip validation if property is not required and is not present
+        if ((item[propKey] === undefined || item[propKey] === null) && !propRules.required) {
+          continue;
+        }
+        
+        // Validate the property against its rules
+        for (const ruleKey of Object.keys(propRules)) {
+          if (ruleKey === 'properties' || ruleKey === 'items') continue;
+          if (!validate(ruleKey, item[propKey], propRules[ruleKey])) {
+            return false;
+          }
+        }
+      }
+    } else {
+      // For non-object items, validate directly against the rules
+      for (const ruleKey of Object.keys(itemRules)) {
+        if (!validate(ruleKey, item, itemRules[ruleKey])) {
+          return false;
+        }
       }
     }
   }
@@ -207,10 +239,21 @@ const init = (
       // If it's an array type and has item validation, check each item
       if (rules.type === "array" && rules.items && Array.isArray(reqData[requestKey])) {
         for (let i = 0; i < reqData[requestKey].length; i++) {
-          const itemErrors = init(reqData[requestKey][i], { item: rules.items });
-          if (itemErrors.length > 0) {
-            errors.push(generateErrorResponse("items", `${requestKey}[${i}]`));
-            break;
+          // Handle the case where items are objects with properties
+          if (rules.items.type === "object" && rules.items.properties) {
+            const itemErrors = init(reqData[requestKey][i], rules.items.properties);
+            if (itemErrors.length > 0) {
+              errors.push(...itemErrors.map(err => ({
+                ...err,
+                param: `${requestKey}[${i}].${err.param}`
+              })));
+            }
+          } else {
+            // For non-object item types
+            const itemErrors = init(reqData[requestKey][i], { item: rules.items });
+            if (itemErrors.length > 0) {
+              errors.push(generateErrorResponse("items", `${requestKey}[${i}]`));
+            }
           }
         }
         continue;

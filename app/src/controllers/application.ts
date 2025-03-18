@@ -141,7 +141,9 @@ const ApplicationController = () => {
         const request: AddStep3DataRequest = convertRequestToAddStep3DataRequest(
           req.body
         );
-  
+        
+        // Add token_user_id to the request
+        request.token_user_id = (req as any).token_user_id;
 
       const resp = await applicationService.addStep3Data(request);
       

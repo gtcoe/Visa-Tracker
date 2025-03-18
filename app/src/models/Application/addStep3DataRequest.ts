@@ -55,6 +55,7 @@ export interface AddStep3DataRequest {
   address_info: AddressInfo;
   mi_fields?: MIFields;
   application_id: number;
+  token_user_id?: number;
 }
 
 export function convertRequestToAddStep3DataRequest(requestBody: any): AddStep3DataRequest {
@@ -65,6 +66,7 @@ export function convertRequestToAddStep3DataRequest(requestBody: any): AddStep3D
     visa_requests: requestBody.visa_requests,
     address_info: requestBody.address_info,
     mi_fields: requestBody.mi_fields,
-    application_id: requestBody.application_id
+    application_id: requestBody.application_id,
+    token_user_id: requestBody.token_user_id
   };
 }
