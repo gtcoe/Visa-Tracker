@@ -20,7 +20,7 @@ import applicationPassengerRepositoryFactory, {
 } from "../repositories/applicationPassengerMapping";
 import { AddStep1DataRequest } from "../models/Application/addStep1DataRequest";
 import { AddStep2DataRequest } from "../models/Application/addStep2DataRequest";
-import { AddStep3DataRequest } from "../models/Application/addStep3DataRequest";
+import { AddStep3DataRequest, PersonalInfo, PassportInfo, AddressInfo } from "../models/Application/addStep3DataRequest";
 import { AddStep4DataRequest } from "../models/Application/addStep4DataRequest";
 import { SearchPaxRequest } from "../models/Application/searchPax";
 import { SearchRequest } from "../models/Application/tracker";
@@ -33,8 +33,7 @@ const applicationService = () => {
   const applicationRepository = ApplicationRepository();
   const userRepository = userRepositoryFactory();
   const passengerRepository = passengerRepositoryFactory();
-  const applicationPassengerRepository =
-    applicationPassengerRepositoryFactory();
+  const applicationPassengerRepository = applicationPassengerRepositoryFactory();
 
   //Done
   const addStep1Data = async (request: AddStep1DataRequest): Promise<any> => {
@@ -319,6 +318,48 @@ const applicationService = () => {
     }
   };
 
+  const verifyPassengerChange = async (savedPassengerinfo: RepoPassengerData, newPassengerinfo: PersonalInfo, newPassportInfo: PassportInfo, newAddressInfo: AddressInfo) => {
+    // Check if there are any changes in passenger details
+    const isPersonalInfoSame = 
+      savedPassengerinfo.first_name === newPassengerinfo.first_name &&
+      savedPassengerinfo.last_name === newPassengerinfo.last_name &&
+      savedPassengerinfo.email === newPassengerinfo.email_id &&
+      savedPassengerinfo.dob === newPassengerinfo.date_of_birth &&
+      savedPassengerinfo.processing_branch === newPassengerinfo.processing_branch;
+    
+    const isPassportInfoSame =
+      savedPassengerinfo.passport_number === newPassportInfo.passport_number &&
+      savedPassengerinfo.passport_date_of_issue === newPassportInfo.date_of_issue &&
+      savedPassengerinfo.passport_date_of_expiry === newPassportInfo.date_of_expiry &&
+      savedPassengerinfo.passport_issue_at === newPassportInfo.issue_at &&
+      String(savedPassengerinfo.count_of_expired_passport) === String(newPassportInfo.no_of_expired_passport) &&
+      savedPassengerinfo.expired_passport_number === newPassportInfo.expired_passport_number;
+    
+    const isAddressInfoSame =
+      savedPassengerinfo.address_line_1 === newAddressInfo.address_line1 &&
+      (savedPassengerinfo.address_line_2 || '') === (newAddressInfo.address_line2 || '') &&
+      String(savedPassengerinfo.country) === String(newAddressInfo.country) &&
+      String(savedPassengerinfo.state) === String(newAddressInfo.state) &&
+      String(savedPassengerinfo.city) === String(newAddressInfo.city) &&
+      savedPassengerinfo.zip === newAddressInfo.zip &&
+      savedPassengerinfo.occupation === newAddressInfo.occupation &&
+      savedPassengerinfo.position === newAddressInfo.position;
+    
+    // If all information is the same, we can continue with the existing passenger
+    // If any information has changed, we need to create a new passenger and update mapping
+    const isAllInfoSame = isPersonalInfoSame && isPassportInfoSame && isAddressInfoSame;
+    
+    return {
+      isChanged: !isAllInfoSame,
+      // If we need detailed info on what's changed later:
+      details: {
+        isPersonalInfoSame,
+        isPassportInfoSame,
+        isAddressInfoSame
+      }
+    };
+  }
+
   const addStep3Data = async (
     request: AddStep3DataRequest
   ): Promise<ResponseModel> => {
@@ -340,83 +381,70 @@ const applicationService = () => {
         token_user_id
       } = request;
       
-      console.log("Request data:", { application_id, token_user_id });
+      // 1. First check if application exists and get passenger mapping in a single query
+      const applicationAndMappingQuery = `
+        SELECT app.*, 
+               apm.passenger_id, 
+               p.first_name, p.last_name, p.email, p.dob, p.processing_branch,
+               p.passport_number, p.passport_date_of_issue, p.passport_date_of_expiry, 
+               p.passport_issue_at, p.count_of_expired_passport, p.expired_passport_number,
+               p.address_line_1, p.address_line_2, p.country, p.state, p.city, p.zip, 
+               p.occupation, p.position, p.status, p.last_updated_by
+        FROM applications app
+        LEFT JOIN application_passenger_mapping apm ON app.id = apm.application_id
+        LEFT JOIN passengers p ON apm.passenger_id = p.id
+        WHERE app.id = ?`;
       
-      // 1. First check if application exists
-      const applicationQuery = `SELECT * FROM applications WHERE id = ?`;
-      console.log("Application query:", applicationQuery, [application_id]);
-      const applicationResult = await connection.query(applicationQuery, [application_id]);
-      console.log("Application result:", applicationResult);
+      const result = await connection.query(applicationAndMappingQuery, [application_id]);
       
-      if (!applicationResult.data || applicationResult.data.length === 0) {
+      if (!result.data || result.data.length === 0) {
         response.message = `Application with ID ${application_id} not found`;
         return response;
       }
 
-      const applicationData = applicationResult.data[0];
-
-      // 2. Check if passenger already exists for this application
-      const mappingQuery = `SELECT * FROM application_passenger_mapping WHERE application_id = ?`;
-      const mappingResult = await connection.query(mappingQuery, [application_id]);
+      const applicationData = result.data[0];
       
       let passengerId;
+      let passengerExists = false;
       
-      if (mappingResult.data && mappingResult.data.length > 0) {
-        // Passenger exists, get the ID
-        passengerId = mappingResult.data[0].passenger_id;
+      // Check if passenger already exists for this application
+      if (applicationData.passenger_id) {
+        passengerExists = true;
+        passengerId = applicationData.passenger_id;
         
-        // Update passenger data
-        const updatePassengerQuery = `
-          UPDATE passengers 
-          SET 
-            first_name = ?,
-            last_name = ?,
-            email = ?,
-            dob = ?,
-            processing_branch = ?,
-            passport_number = ?,
-            passport_date_of_issue = ?,
-            passport_date_of_expiry = ?,
-            passport_issue_at = ?,
-            count_of_expired_passport = ?,
-            expired_passport_number = ?,
-            address_line_1 = ?,
-            address_line_2 = ?,
-            country = ?,
-            state = ?,
-            city = ?,
-            zip = ?,
-            occupation = ?,
-            position = ?,
-          WHERE id = ?`;
-        
-        const updatePassengerParams = [
-          personal_info.first_name,
-          personal_info.last_name,
-          personal_info.email_id,
-          personal_info.date_of_birth,
-          personal_info.processing_branch,
-          passport_info.passport_number,
-          passport_info.date_of_issue,
-          passport_info.date_of_expiry,
-          passport_info.issue_at,
-          passport_info.no_of_expired_passport,
-          passport_info.expired_passport_number,
-          address_info.address_line1,
-          address_info.address_line2 || '',
-          address_info.country,
-          address_info.state,
-          address_info.city,
-          address_info.zip,
-          address_info.occupation,
-          address_info.position,
-          passengerId
-        ];
-        
-        await connection.query(updatePassengerQuery, updatePassengerParams);
-      } else {
-        // Insert new passenger
-        const insertPassengerQuery = `
+        // Create a RepoPassengerData object from the joined query results
+        const passengerInfo: RepoPassengerData = {
+          id: applicationData.passenger_id,
+          first_name: applicationData.first_name,
+          last_name: applicationData.last_name,
+          email: applicationData.email,
+          dob: applicationData.dob,
+          phone: applicationData.phone || "",
+          processing_branch: applicationData.processing_branch,
+          passport_number: applicationData.passport_number,
+          passport_date_of_issue: applicationData.passport_date_of_issue,
+          passport_date_of_expiry: applicationData.passport_date_of_expiry,
+          passport_issue_at: applicationData.passport_issue_at,
+          count_of_expired_passport: applicationData.count_of_expired_passport,
+          expired_passport_number: applicationData.expired_passport_number,
+          address_line_1: applicationData.address_line_1,
+          address_line_2: applicationData.address_line_2 || "",
+          country: applicationData.country,
+          state: applicationData.state,
+          city: applicationData.city,
+          zip: applicationData.zip,
+          occupation: applicationData.occupation,
+          position: applicationData.position,
+          status: applicationData.status,
+          last_updated_by: applicationData.last_updated_by
+        };
+
+        // Verify if passenger details have changed
+        const verifyPassengerChangeResponse = await verifyPassengerChange(passengerInfo, personal_info, passport_info, address_info);
+
+        if (verifyPassengerChangeResponse.isChanged) {
+          // Insert new passenger if details have changed
+          const insertPassengerQuery = `
           INSERT INTO passengers (
             first_name, last_name, email, dob, processing_branch,
             passport_number, passport_date_of_issue, passport_date_of_expiry, passport_issue_at,
@@ -430,7 +458,62 @@ const applicationService = () => {
             ?, ?, ?, ?, ?, ?,
             ?, ?, ?
           )`;
-        
+
+          const insertPassengerParams = [
+            personal_info.first_name,
+            personal_info.last_name,
+            personal_info.email_id,
+            personal_info.date_of_birth,
+            personal_info.processing_branch,
+            passport_info.passport_number,
+            passport_info.date_of_issue,
+            passport_info.date_of_expiry,
+            passport_info.issue_at,
+            passport_info.no_of_expired_passport,
+            passport_info.expired_passport_number,
+            address_info.address_line1,
+            address_info.address_line2 || '',
+            address_info.country,
+            address_info.state,
+            address_info.city,
+            address_info.zip,
+            address_info.occupation,
+            address_info.position,
+            token_user_id
+          ];
+
+          const passengerResult = await connection.query(insertPassengerQuery, insertPassengerParams);
+          passengerId = passengerResult.data.insertId;
+
+          // Create mapping between application and passenger
+          const insertMappingQuery = `
+          INSERT INTO application_passenger_mapping (
+            application_id, passenger_id, last_updated_by
+          ) VALUES (?, ?, ?)`;
+
+          await connection.query(insertMappingQuery, [
+            application_id, 
+            passengerId,
+            token_user_id 
+          ]);
+        }
+      } else {
+        // Insert new passenger if none exists
+        const insertPassengerQuery = `
+        INSERT INTO passengers (
+          first_name, last_name, email, dob, processing_branch,
+          passport_number, passport_date_of_issue, passport_date_of_expiry, passport_issue_at,
+          count_of_expired_passport, expired_passport_number,
+          address_line_1, address_line_2, country, state, city, zip, 
+          occupation, position, last_updated_by
+        ) VALUES (
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?,
+          ?, ?, ?, ?, ?, ?,
+          ?, ?, ?
+        )`;
+
         const insertPassengerParams = [
           personal_info.first_name,
           personal_info.last_name,
@@ -451,26 +534,26 @@ const applicationService = () => {
           address_info.zip,
           address_info.occupation,
           address_info.position,
-          request.token_user_id
+          token_user_id
         ];
-        
+
         const passengerResult = await connection.query(insertPassengerQuery, insertPassengerParams);
         passengerId = passengerResult.data.insertId;
-        
+
         // Create mapping between application and passenger
         const insertMappingQuery = `
-          INSERT INTO application_passenger_mapping (
-            application_id, passenger_id, last_updated_by
-          ) VALUES (?, ?, ?)`;
-        
+        INSERT INTO application_passenger_mapping (
+          application_id, passenger_id, last_updated_by
+        ) VALUES (?, ?, ?)`;
+
         await connection.query(insertMappingQuery, [
           application_id, 
           passengerId,
-          request.token_user_id 
+          token_user_id 
         ]);
       }
       
-      // 3. Update application with travel info and first visa request
+      // Update application with travel info and first visa request
       const updateApplicationQuery = `
         UPDATE applications 
         SET 
@@ -479,7 +562,6 @@ const applicationService = () => {
           file_number_1 = ?,
           is_travel_date_tentative = ?,
           priority_submission = ?,
-          reference_number = ?,
           visa_country = ?,
           visa_category = ?,
           nationality = ?,
@@ -498,7 +580,6 @@ const applicationService = () => {
         travel_info.file_no,
         travel_info.is_travel_date_tentative,
         travel_info.priority_submission,
-        applicationData.reference_number,
         visa_requests[0].visa_country,
         visa_requests[0].visa_category,
         visa_requests[0].nationality,
@@ -514,27 +595,31 @@ const applicationService = () => {
       
       await connection.query(updateApplicationQuery, updateApplicationParams);
       
-      // 4. If there are multiple visa requests, create additional applications
+      // Handle multiple visa requests with better performance by committing the current transaction
+      // and creating a new one for additional visa requests
+      await connection.commit();
+      
+      // If there are multiple visa requests, create additional applications
       if (visa_requests.length > 1) {
-        // Create new applications for each additional visa request
-        for (let i = 1; i < visa_requests.length; i++) {
-          const createApplicationQuery = `
-            INSERT INTO applications (
-              client_user_id, pax_type, country_of_residence, 
-              state_of_residence, citizenship, service_type, referrer,
-              file_number_1, travel_date, interview_date,
-              is_travel_date_tentative, priority_submission, reference_number,
-              visa_country, visa_category, nationality, state_id, entry_type, remarks,
-              olvt_number, external_status, status, queue, last_updated_by
-            ) VALUES (
-              ?, ?, ?, 
-              ?, ?, ?, ?,
-              ?, ?, ?,
-              ?, ?, ?, ?, ?, ?,
-              ?, ?
-            )`;
+        // Start a new transaction for additional visa requests
+        await connection.beginTransaction();
+        
+        // Prepare a single batch insert for all additional applications (if database supports it)
+        const createApplicationQuery = `
+          INSERT INTO applications (
+            client_user_id, pax_type, country_of_residence, 
+            state_of_residence, citizenship, service_type, referrer,
+            file_number_1, travel_date, interview_date,
+            is_travel_date_tentative, priority_submission, reference_number,
+            visa_country, visa_category, nationality, state_id, entry_type, remarks,
+            olvt_number, external_status, status, queue, last_updated_by
+          ) VALUES ?`;
           
-          const createApplicationParams = [
+        // Create the values array for batch insert
+        const additionalVisaValues = [];
+        
+        for (let i = 1; i < visa_requests.length; i++) {
+          additionalVisaValues.push([
             applicationData.client_user_id,
             applicationData.pax_type,
             applicationData.country_of_residence,
@@ -558,26 +643,44 @@ const applicationService = () => {
             APPLICATION_EXTERNAL_STATUS.IN_TRANSIT,
             APPLICATION_QUEUES.IN_TRANSIT,
             constants.STATUS.APPLICATION.STEP3_DONE,
-          ];
-          
-          const newAppResult = await connection.query(createApplicationQuery, createApplicationParams);
-          const newApplicationId = newAppResult.data.insertId;
-          
-          // Create application-passenger mapping for the new application
-          const insertMappingQuery = `
-            INSERT INTO application_passenger_mapping (
-              application_id, passenger_id, last_updated_by
-            ) VALUES (?, ?, ?)`;
-          
-          await connection.query(insertMappingQuery, [
-            newApplicationId, 
-            passengerId,
-            request.token_user_id 
+            token_user_id
           ]);
         }
+        
+        // Execute batch insert if there are additional visa requests
+        if (additionalVisaValues.length > 0) {
+          // Note: MySQL syntax requires nested arrays for multiple row insert
+          const additionalAppsResult = await connection.query(createApplicationQuery, [additionalVisaValues]);
+          
+          // Get the inserted IDs to create mappings
+          const insertedIds = [];
+          if (additionalAppsResult.data && additionalAppsResult.data.insertId) {
+            const firstInsertId = additionalAppsResult.data.insertId;
+            for (let i = 0; i < additionalVisaValues.length; i++) {
+              insertedIds.push(firstInsertId + i);
+            }
+          }
+          
+          // Create batch mappings for all new applications
+          if (insertedIds.length > 0) {
+            const insertMappingQuery = `
+              INSERT INTO application_passenger_mapping (
+                application_id, passenger_id, last_updated_by
+              ) VALUES ?`;
+              
+            const mappingValues = insertedIds.map(appId => [
+              appId, 
+              passengerId,
+              token_user_id
+            ]);
+            
+            await connection.query(insertMappingQuery, [mappingValues]);
+          }
+        }
+        
+        // Commit the second transaction
+        await connection.commit();
       }
-      
-      await connection.commit();
       
       response.setStatus(true);
       response.message = "Application Updated Successfully.";

@@ -1,4 +1,4 @@
-interface PersonalInfo {
+export interface PersonalInfo {
   first_name: string;
   last_name: string;
   email_id: string;
@@ -6,7 +6,7 @@ interface PersonalInfo {
   processing_branch: number;
 }
 
-interface PassportInfo {
+export interface PassportInfo {
   passport_number: string;
   date_of_issue: string;
   date_of_expiry: string;
@@ -32,7 +32,7 @@ interface VisaRequest {
   remark?: string;
 }
 
-interface AddressInfo {
+export interface AddressInfo {
   address_line1: string;
   address_line2?: string;
   country: number;
