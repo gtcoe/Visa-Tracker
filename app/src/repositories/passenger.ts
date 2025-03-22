@@ -82,6 +82,109 @@ const passengerRepository = () => {
     }
   };
 
+  /**
+   * Insert passenger with connection for transaction support
+   */
+  const insertPassengerWithConnection = async (data: PassengerData, connection: any): Promise<any> => {
+    try {
+      const query = `
+      INSERT INTO ${constants.TABLES.PASSENGER}  
+        (first_name, last_name, email, dob, phone, processing_branch, passport_number, 
+         passport_date_of_issue, passport_date_of_expiry, passport_issue_at, 
+         count_of_expired_passport, expired_passport_number, address_line_1, 
+         address_line_2, country, state, city, zip, occupation, position, last_updated_by, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+      const params = [
+        data.first_name,
+        data.last_name,
+        data.email,
+        data.dob || '',
+        data.phone || '',
+        data.processing_branch,
+        data.passport_number,
+        data.passport_date_of_issue,
+        data.passport_date_of_expiry,
+        data.passport_issue_at,
+        data.count_of_expired_passport,
+        data.expired_passport_number,
+        data.address_line_1,
+        data.address_line_2 || '',
+        data.country,
+        data.state,
+        data.city,
+        data.zip,
+        data.occupation,
+        data.position,
+        data.last_updated_by,
+        data.status || constants.STATUS.PASSENGER.ACTIVE,
+      ];
+      
+      const resp = await connection.query(query, params);
+
+      if (resp.data?.insertId) {
+        await insertPassengerHistoryWithConnection(resp.data.insertId, connection);
+      }
+      return resp;
+    } catch (e) {
+      logger.error(`Error in insertPassengerWithConnection: ${generateError(e)}`);
+      throw e;
+    }
+  };
+  
+  /**
+   * Insert passenger history with connection support
+   */
+  const insertPassengerHistoryWithConnection = async (passengerId: number, connection: any): Promise<void> => {
+    try {
+      const getPassengerData = await connection.query(
+        `SELECT * FROM ${constants.TABLES.PASSENGER} WHERE id = ?`,
+        [passengerId]
+      );
+      
+      if (getPassengerData.data.length > 0) {
+        const passengerData = getPassengerData.data[0];
+        const historyQuery = `INSERT INTO ${constants.TABLES.PASSENGER_HISTORY} 
+          (passenger_id, first_name, last_name, email, dob, phone, processing_branch, passport_number, 
+          passport_date_of_issue, passport_date_of_expiry, passport_issue_at, 
+          count_of_expired_passport, expired_passport_number, address_line_1, 
+          address_line_2, country, state, city, zip, occupation, position, last_updated_by, status) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          
+        const params = [
+          passengerId,
+          passengerData.first_name,
+          passengerData.last_name,
+          passengerData.email,
+          passengerData.dob,
+          passengerData.phone,
+          passengerData.processing_branch,
+          passengerData.passport_number,
+          passengerData.passport_date_of_issue,
+          passengerData.passport_date_of_expiry,
+          passengerData.passport_issue_at,
+          passengerData.count_of_expired_passport,
+          passengerData.expired_passport_number,
+          passengerData.address_line_1,
+          passengerData.address_line_2,
+          passengerData.country,
+          passengerData.state,
+          passengerData.city,
+          passengerData.zip,
+          passengerData.occupation,
+          passengerData.position,
+          passengerData.last_updated_by,
+          passengerData.status,
+        ];
+        
+        await connection.query(historyQuery, params);
+      }
+    } catch (e) {
+      logger.error(`Error in insertPassengerHistoryWithConnection: ${generateError(e)}`);
+      throw e;
+    }
+  };
+
   //Done
   const insertPassengerHistory = async (
     userId: number | undefined
@@ -183,6 +286,7 @@ const passengerRepository = () => {
     insertPassenger,
     getByPassengerIds,
     search,
+    insertPassengerWithConnection
   };
 };
 

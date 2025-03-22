@@ -156,17 +156,191 @@ const applicationRepository = () => {
     applicationId: number,
   ): Promise<any> => {
     try {
-      const query = `UPDATE ${constants.TABLES.APPLICATION} 
-                SET status = ?, last_updated_by = ?, remarks = ?, dispatch_medium = ?, dispatch_medium_number = ? 
-                WHERE id = ?`;
-      const params = [constants.STATUS.APPLICATION.STEP4_DONE, request.last_updated_by, request.remarks, request.dispatch_medium, request.dispatch_medium_number, applicationId];
+      const query = `UPDATE ${constants.TABLES.APPLICATION} SET dispatch_medium = ?, 
+          dispatch_medium_number = ?, team_remarks = ?, client_remarks = ?, billing_remarks = ?, status = ?
+          WHERE id = ?`;
+      const params = [
+        request.dispatch_medium,
+        request.dispatch_medium_number,
+        request.team_remarks,
+        request.client_remarks,
+        request.billing_remarks,
+        constants.STATUS.APPLICATION.STEP4_DONE,
+        applicationId,
+      ];
+
       const resp = await Mysql.query(query, params);
-      if (resp.data.affectedRows > 0) {
+      if (resp.data?.affectedRows > 0) {
         insertHistory(applicationId);
       }
-      return resp
+      return resp;
     } catch (e) {
       logger.error(`Error in updateStep4Data: ${generateError(e)}`);
+      throw e;
+    }
+  };
+
+  /**
+   * Get application with passenger details in a single query
+   */
+  const getApplicationWithPassenger = async (
+    applicationId: number,
+    connection?: any
+  ): Promise<GetApplicationDataDBResponse> => {
+    try {
+      const query = `
+        SELECT app.*, 
+               apm.passenger_id, 
+               p.first_name, p.last_name, p.email, p.dob, p.phone, p.processing_branch,
+               p.passport_number, p.passport_date_of_issue, p.passport_date_of_expiry, 
+               p.passport_issue_at, p.count_of_expired_passport, p.expired_passport_number,
+               p.address_line_1, p.address_line_2, p.country, p.state, p.city, p.zip, 
+               p.occupation, p.position, p.status as passenger_status, p.last_updated_by as passenger_updated_by
+        FROM ${constants.TABLES.APPLICATION} app
+        LEFT JOIN ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} apm ON app.id = apm.application_id
+        LEFT JOIN ${constants.TABLES.PASSENGER} p ON apm.passenger_id = p.id
+        WHERE app.id = ?`;
+      
+      if (connection) {
+        return await connection.query(query, [applicationId]);
+      } else {
+        return await Mysql.query(query, [applicationId]);
+      }
+    } catch (e) {
+      logger.error(`Error in getApplicationWithPassenger: ${generateError(e)}`);
+      throw e;
+    }
+  };
+  
+  /**
+   * Update application with step 3 data
+   */
+  const updateStep3Data = async (
+    data: any,
+    connection?: any
+  ): Promise<any> => {
+    try {
+      const query = `
+        UPDATE ${constants.TABLES.APPLICATION} 
+        SET 
+          travel_date = ?,
+          interview_date = ?,
+          file_number_1 = ?,
+          is_travel_date_tentative = ?,
+          priority_submission = ?,
+          visa_country = ?,
+          visa_category = ?,
+          nationality = ?,
+          state_id = ?,
+          entry_type = ?,
+          remarks = ?,
+          olvt_number = ?,
+          external_status = ?,
+          status = ?,
+          queue = ?
+        WHERE id = ?`;
+      
+      const params = [
+        data.travel_date,
+        data.interview_date,
+        data.file_number_1,
+        data.is_travel_date_tentative,
+        data.priority_submission,
+        data.visa_country,
+        data.visa_category,
+        data.nationality,
+        data.state_id,
+        data.entry_type,
+        data.remarks,
+        data.olvt_number,
+        data.external_status,
+        data.status,
+        data.queue,
+        data.id
+      ];
+      
+      let resp;
+      if (connection) {
+        resp = await connection.query(query, params);
+      } else {
+        resp = await Mysql.query(query, params);
+      }
+      
+      if (resp.data?.affectedRows > 0) {
+        if (connection) {
+          await insertHistoryWithConnection(data.id, connection);
+        } else {
+          await insertHistory(data.id);
+        }
+      }
+      
+      return resp;
+    } catch (e) {
+      logger.error(`Error in updateStep3Data: ${generateError(e)}`);
+      throw e;
+    }
+  };
+  
+  /**
+   * Insert application history with connection
+   */
+  const insertHistoryWithConnection = async (
+    applicationId: number,
+    connection: any
+  ): Promise<void> => {
+    try {
+      const dateTimeNow = moment().format('YYYY-MM-DD HH:mm:ss');
+      const getApplicationData = await connection.query(
+        `SELECT * FROM ${constants.TABLES.APPLICATION} WHERE id = ?`, [applicationId]
+      );
+      if (getApplicationData.data.length > 0) {
+        const applicationData = getApplicationData.data[0];
+        const historyQuery = `INSERT INTO ${constants.TABLES.APPLICATION_HISTORY} SET ?`;
+        await connection.query(historyQuery, {...applicationData, application_id: applicationId, created_at: dateTimeNow});
+      }
+    } catch (e) {
+      logger.error(`Error in insertHistoryWithConnection: ${generateError(e)}`);
+      throw e;
+    }
+  };
+  
+  /**
+   * Batch insert multiple applications
+   */
+  const batchInsertApplications = async (
+    applications: any[],
+    connection: any
+  ): Promise<any> => {
+    try {
+      if (applications.length === 0) {
+        return { status: true, data: null };
+      }
+      
+      // Extract all the field names from the first application
+      const fields = Object.keys(applications[0]).join(', ');
+      
+      // Create the query with placeholders for each row
+      const query = `
+        INSERT INTO ${constants.TABLES.APPLICATION} (${fields})
+        VALUES ?`;
+      
+      // Transform the applications array to array of arrays for batch insert
+      const values = applications.map(app => Object.values(app));
+      
+      // Execute the batch insert
+      const result = await connection.query(query, [values]);
+      
+      // Insert history records for each new application
+      if (result.data?.insertId) {
+        const firstInsertId = result.data.insertId;
+        for (let i = 0; i < applications.length; i++) {
+          await insertHistoryWithConnection(firstInsertId + i, connection);
+        }
+      }
+      
+      return result;
+    } catch (e) {
+      logger.error(`Error in batchInsertApplications: ${generateError(e)}`);
       throw e;
     }
   };
@@ -175,10 +349,13 @@ const applicationRepository = () => {
     insertAddStep1Data,
     getByReferenceNumber,
     getById,
-    updateStatus,
     searchSubmittedApplicationsByReferenceNumber,
+    updateStatus,
     updateStep4Data,
-    insertHistory
+    insertHistory,
+    getApplicationWithPassenger,
+    updateStep3Data,
+    batchInsertApplications
   };
 };
 
