@@ -11,10 +11,8 @@ import { generateRandomString } from "../services/util";
 // const logDir: string = process.env.LOG_DIR || path.join(__dirname, "../logs");
 
 
-// Manually define directory paths
-const currentDir = process.cwd();
-// Use logs directory inside the current working directory
-const logDir: string = process.env.LOG_DIR || path.join(currentDir, "logs");
+// Define log directory in a writable location for serverless environments
+const logDir: string = process.env.LOG_DIR || '/tmp/logs';
 
 // Ensure log directory exists
 if (!fs.existsSync(logDir)) {
