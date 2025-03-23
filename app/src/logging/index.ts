@@ -13,9 +13,8 @@ import { generateRandomString } from "../services/util";
 
 // Manually define directory paths
 const currentDir = process.cwd();
-const appDirname = path.dirname(currentDir);
-
-const logDir: string = process.env.LOG_DIR || path.join(appDirname, "../logs");
+// Use logs directory inside the current working directory
+const logDir: string = process.env.LOG_DIR || path.join(currentDir, "logs");
 
 // Ensure log directory exists
 if (!fs.existsSync(logDir)) {
