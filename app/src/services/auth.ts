@@ -1,4 +1,3 @@
-import { Request, Response as ExpressResponse } from "express";
 import moment from "moment";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -9,24 +8,12 @@ import constants from "../config/constants";
 import { generateError, generateRandomString } from "../services/util";
 import Response from "../models/response";
 import userRepositoryFactory, {
-  UserData,
   GetUserDataDBResponse,
 } from "../repositories/user";
 
 interface SignInRequest {
   email: string;
   password: string;
-}
-
-interface User {
-  id: number;
-  email: string;
-  password: string;
-  type: string;
-  status: string;
-  password_requested?: string;
-  password_valid_till: string;
-  // add other properties as needed
 }
 
 const authService = () => {

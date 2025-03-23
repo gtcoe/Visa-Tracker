@@ -7,13 +7,8 @@
 // } from "express";
 
 import express from "express";
-import type {  Express,
-    Request,
-    Response,
-    NextFunction,
-    Router, } from "express"; // Use 'type' for TS compatibility
-
+import type { Express, NextFunction, Router } from "express"; // Only import types that are needed
 
 const app: Express = express();
 
-export { express, app, Request, Response, NextFunction, Router };
+export { express, app, NextFunction, Router };

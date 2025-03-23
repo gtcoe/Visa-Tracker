@@ -2,9 +2,7 @@ import constants from "../config/constants";
 import { generateError } from "../services/util";
 import { logger } from "../logging";
 import Mysql from "../database/mySql";
-import moment from "moment";
 import { AddStep1DataRequest } from "../models/Application/addStep1DataRequest";
-import {  } from "../models/Application/addStep3DataRequest";
 import { AddStep4DataRequest } from "../models/Application/addStep4DataRequest";
 
 export interface ApplicationData {

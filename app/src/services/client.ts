@@ -6,30 +6,13 @@ import { logger } from "../logging";
 import Response from "../models/response";
 import { generateError, generateRandomString } from "./util";
 import ClientRepository, {
-  ClientData,
   GetClientDataDBResponse,
 } from "../repositories/client";
 import UserRepository, {
-  UserData,
   GetUserDataDBResponse,
 } from "../repositories/user";
 import { AddClientRequest } from "../models/Client/addClientRequest";
 import { AddUserRequest } from "../models/User/addUserRequest";
-import { UpdateUserStatusRequest } from "../models/User/updateUserStatusRequest";
-
-interface UserRequest {
-  id: number;
-  name: string;
-  email: string;
-  password: string;
-  status: number;
-  type: number;
-  password_valid_till: string;
-  password_requested: number;
-  last_updated_by: number;
-  last_logged_in_at: number;
-  // Additional fields can be added as needed.
-}
 
 const clientService = () => {
   const clientRepository = ClientRepository();

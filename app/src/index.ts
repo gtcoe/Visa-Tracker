@@ -6,13 +6,13 @@ import json2xls from "json2xls";
 // import AWS from "aws-sdk";
 import MySql from "./database/mySql";
 import { logger } from "./logging";
-import {setRequestContext, getRequestContext} from "./hooks/asyncHooks";
+import { setRequestContext } from "./hooks/asyncHooks";
 
 // import s3Config from "./app/config/s3BucketConfig";
 
 // Load environment variables
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8081;
-const ENV = process.env.NODE_ENV || "development";
+// const ENV = process.env.NODE_ENV || "development";
 // const AWS_REGION = process.env.AWS_REGION || s3Config[ENV]?.REGION;
 // const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || s3Config[ENV]?.ACCESS_KEY_ID;
 // const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || s3Config[ENV]?.SECRET_ACCESS_KEY;
@@ -23,7 +23,7 @@ const setupMiddleware = (app: Application) => {
   app.use(json2xls.middleware);
   app.use(
     bodyParser.json({
-      verify: (req: any & { rawBody?: string }, res, buf) => {
+      verify: (req: any & { rawBody?: string }, _, buf) => {
         req.rawBody = buf.toString();
       },
     })
@@ -36,7 +36,7 @@ const setupMiddleware = (app: Application) => {
   ];
 
   const corsOptions = {
-    origin: function (origin: string | undefined, callback: any) {
+    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
       if (allowedOrigins.indexOf(origin!) !== -1 || !origin) {
         callback(null, true);
       } else {

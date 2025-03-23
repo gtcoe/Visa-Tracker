@@ -1,10 +1,8 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import { logger } from "../logging";
 import AuthService from "../services/auth";
 import { generateError } from "../services/util";
 import ResponseModel from "../models/response";
-import config from "../config/auth";
 
 // Create a single instance of AuthService to reuse across functions
 const authService = AuthService();

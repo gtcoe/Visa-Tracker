@@ -30,10 +30,6 @@ import {
   SearchRequest,
   convertRequestToSearchRequestt,
 } from "../models/Application/tracker";
-import {
-  UpdateUserStatusRequest,
-  convertRequestToUpdateUserStatusRequest,
-} from "../models/User/updateUserStatusRequest";
 
 const applicationService = ApplicationService();
 

@@ -7,15 +7,11 @@ import {
   AddClientRequest,
   convertRequestToAddClientRequest,
 } from "../models/Client/addClientRequest";
-import {
-  UpdateUserStatusRequest,
-  convertRequestToUpdateUserStatusRequest,
-} from "../models/User/updateUserStatusRequest";
 
 const clientService = ClientService();
 
 const ClientController = () => {
-  const getAll = async (req: Request, res: Response): Promise<void> => {
+  const getAll = async (_: Request, res: Response): Promise<void> => {
     try {
       const resp = await clientService.getAll();
       res.send(resp);

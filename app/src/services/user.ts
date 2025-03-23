@@ -12,20 +12,6 @@ import userRepositoryFactory, {
 import { AddUserRequest } from "../models/User/addUserRequest";
 import { UpdateUserStatusRequest } from "../models/User/updateUserStatusRequest";
 
-interface UserRequest {
-  id: number;
-  name: string;
-  email: string;
-  password: string;
-  status: number;
-  type: number;
-  password_valid_till: string;
-  password_requested: number;
-  last_updated_by: number;
-  last_logged_in_at: number;
-  // Additional fields can be added as needed.
-}
-
 const userService = () => {
   const userRepository = userRepositoryFactory();
 

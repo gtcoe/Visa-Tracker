@@ -7,7 +7,7 @@ import { express, NextFunction, Router } from "../app";
 
 // Helper middleware to assign role-based permissions
 const withAuth = (roles: number[]) => [
-  (req: any, res: any, next: NextFunction) => {
+  (req: any, _: any, next: NextFunction) => {
     req.type_required = roles;
     next();
   },

@@ -3,7 +3,7 @@ import { app, express, NextFunction, Router } from "../app";
 import requestValidator from "../middleware/requestValidatorMiddleware";
 import authRequestValidationConfig from "../config/request/auth";
 
-const setHeaders = (req: any, res: any, next: NextFunction): void => {
+const setHeaders = (_: any, res: any, next: NextFunction): void => {
   res.header(
     "Access-Control-Allow-Headers",
     "x-access-token, Origin, Content-Type, Accept"

@@ -14,7 +14,7 @@ app.use(routerConfig.APPLICATION_ROUTE, verifyToken, applicationRouter);
 app.use(routerConfig.AUTH_ROUTE, authRouter);
 
 // Handle 404 errors
-app.use((req: any, res: any) => {
+app.use((_: any, res: any) => {
   res.status(404).json({
     status: false,
     code: 404,
