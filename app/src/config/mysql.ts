@@ -24,9 +24,9 @@ const MySqlConfig: { dev: DbConfig; prod: DbConfig } = {
   },
   prod: {
     HOST: process.env.MYSQL_HOST || "",
-    USER: process.env.ENERGY_SERVICES_USER || "",
-    PASSWORD: process.env.ENERGY_SERVICES_PASSWORD || "",
-    DB: process.env.ENERGY_SERVICES_DB || "",
+    USER: process.env.MYSQL_USER || "",
+    PASSWORD: process.env.MYSQL_PASSWORD || "",
+    DB: process.env.MYSQL_DB || "",
     port: process.env.MYSQL_PORT || 3306,
     max: 50,
     min: 0,
