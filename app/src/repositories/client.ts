@@ -7,6 +7,7 @@ import { AddClientRequest } from "../models/Client/addClientRequest";
 export interface ClientData {
   id: number;
   user_id: number;
+  name: string;
   type: number;
   address: string;
   branch: string;
@@ -31,10 +32,11 @@ const clientRepository = () => {
   const insert = async (data: AddClientRequest): Promise<any> => {
     try {
       const query = `INSERT INTO ${constants.TABLES.CLIENT} 
-                (user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)`;
+                (user_id, name, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)`;
       const params = [
         data.user_id,
+        data.name,
         data.type,
         data.address,
         data.branches,
@@ -78,7 +80,7 @@ const clientRepository = () => {
     user_id: number
   ): Promise<GetClientDataDBResponse> => {
     try {
-      const query = `SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by FROM ${constants.TABLES.CLIENT} WHERE user_id = ?`;
+      const query = `SELECT id, name,user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by FROM ${constants.TABLES.CLIENT} WHERE user_id = ?`;
       const params = [user_id];
       return await Mysql.query<ClientData[]>(query, params);
     } catch (e) {

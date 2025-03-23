@@ -138,6 +138,25 @@ const ApplicationController = () => {
 
   const addStep3Data = async (req: Request, res: Response): Promise<void> => {
     try {
+
+      // check if subRequest is true or false
+      // if false
+      // then -- fetch application data (along with passenger info and visa requests) by application id
+      // if exists, then update the application data with the data received from the request
+      // Verify if the passenger info is changed, if yes then create a new passenger entry and remove old passenger application mapping, and create the new mapping
+      // Verify if the visa requests are changed, if yes then create a new visa request entry and remove old visa request application mapping, and create the new mapping
+       // do this for all visa requests - verify each visa request from the existing requests, remove the changes done, create the new one
+
+
+
+      // if subRequest is true, then treat this as a new application entry
+      // then -- fetch application data (along with passenger info and visa requests) by reference number
+      // if exists, then create a new application entry with the same reference number and step1 data from old application fetched.
+      // create new visa and passenger entries with the new data from the request and their respective mapping
+
+      // if old application does not exist that we fetched using reference number, then return error that "Invalid refernece number"
+
+
         const request: AddStep3DataRequest = convertRequestToAddStep3DataRequest(
           req.body
         );

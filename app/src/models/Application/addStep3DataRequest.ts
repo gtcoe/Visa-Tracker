@@ -56,6 +56,8 @@ export interface AddStep3DataRequest {
   mi_fields?: MIFields;
   application_id: number;
   token_user_id?: number;
+  reference_number?: string;
+  is_sub_request?: boolean;
 }
 
 export function convertRequestToAddStep3DataRequest(requestBody: any): AddStep3DataRequest {
@@ -67,6 +69,8 @@ export function convertRequestToAddStep3DataRequest(requestBody: any): AddStep3D
     address_info: requestBody.address_info,
     mi_fields: requestBody.mi_fields,
     application_id: requestBody.application_id,
-    token_user_id: requestBody.token_user_id
+    token_user_id: requestBody.token_user_id,
+    reference_number: requestBody.reference_number,
+    is_sub_request: requestBody.is_sub_request
   };
 }

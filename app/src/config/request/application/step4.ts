@@ -21,7 +21,7 @@ const step4: ValidationSchema = {
       required: true,
     },
     reference_number: {
-      type: "number",
+      type: "string",
       required: true,
     },
   },

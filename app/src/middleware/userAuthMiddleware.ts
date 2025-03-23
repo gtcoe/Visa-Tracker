@@ -27,6 +27,7 @@ const verifyToken = async (
       .status(401)
       .json({ status: false, message: "No token provided." });
   }
+  console.log("==========>token", token);
 
   try {
     const decoded = jwt.verify(token, config.jwtSecret) as DecodedToken;

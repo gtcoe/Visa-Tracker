@@ -1,5 +1,6 @@
 export type AddClientRequest = {
   user_id?: number;
+  name: string;
   type: number;
   address: string;
   full_name: string;
@@ -22,6 +23,7 @@ export type AddClientRequest = {
 export const convertRequestToAddClientRequest = (
   request: any
 ): AddClientRequest => ({
+  name: String(request.full_name),
   type: Number(request.type),
   address: String(request.address),
   full_name: String(request.full_name),

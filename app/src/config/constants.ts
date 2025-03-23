@@ -10,9 +10,9 @@ const constants = {
     CLIENT_HISTORY: "clients_history",
     PASSENGER: "passengers",
     PASSENGER_HISTORY: "passengers_history",
-    APPLICATION_PASSENGER_MAPPING: "/application_passenger_mapping",
+    APPLICATION_PASSENGER_MAPPING: "application_passenger_mapping",
     APPLICATION_PASSENGER_MAPPING_HISTORY:
-      "/application_passenger_mapping_history",
+      "application_passenger_mapping_history",
   },
 
   STATUS: {

@@ -43,15 +43,15 @@ const passengerRepository = () => {
         (first_name, last_name, email, dob, phone, processing_branch, passport_number, 
          passport_date_of_issue, passport_date_of_expiry, passport_issue_at, 
          count_of_expired_passport, expired_passport_number, address_line_1, 
-         address_line_2, country, state, city, zip, occupation, position, last_updated_by, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+         address_line_2, country, state, city, zip, occupation, position, last_updated_by) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       const params = [
         data.first_name,
         data.last_name,
         data.email,
         data.dob,
-        data.phone,
+        data.phone || '',
         data.processing_branch,
         data.passport_number,
         data.passport_date_of_issue,
@@ -68,7 +68,6 @@ const passengerRepository = () => {
         data.occupation,
         data.position,
         data.last_updated_by,
-        data.status,
       ];
       const resp = await Mysql.query(query, params);
 
@@ -92,8 +91,8 @@ const passengerRepository = () => {
         (first_name, last_name, email, dob, phone, processing_branch, passport_number, 
          passport_date_of_issue, passport_date_of_expiry, passport_issue_at, 
          count_of_expired_passport, expired_passport_number, address_line_1, 
-         address_line_2, country, state, city, zip, occupation, position, last_updated_by, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+         address_line_2, country, state, city, zip, occupation, position, last_updated_by) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       const params = [
         data.first_name,
@@ -117,7 +116,6 @@ const passengerRepository = () => {
         data.occupation,
         data.position,
         data.last_updated_by,
-        data.status || constants.STATUS.PASSENGER.ACTIVE,
       ];
       
       const resp = await connection.query(query, params);
@@ -148,8 +146,8 @@ const passengerRepository = () => {
           (passenger_id, first_name, last_name, email, dob, phone, processing_branch, passport_number, 
           passport_date_of_issue, passport_date_of_expiry, passport_issue_at, 
           count_of_expired_passport, expired_passport_number, address_line_1, 
-          address_line_2, country, state, city, zip, occupation, position, last_updated_by, status) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          address_line_2, country, state, city, zip, occupation, position, last_updated_by) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
           
         const params = [
           passengerId,
@@ -174,7 +172,6 @@ const passengerRepository = () => {
           passengerData.occupation,
           passengerData.position,
           passengerData.last_updated_by,
-          passengerData.status,
         ];
         
         await connection.query(historyQuery, params);
@@ -191,14 +188,14 @@ const passengerRepository = () => {
   ): Promise<void> => {
     try {
       const query = `INSERT INTO ${constants.TABLES.PASSENGER_HISTORY} 
-                (application_id, first_name, last_name, email, dob, phone, processing_branch, passport_number, 
+                (passenger_id, first_name, last_name, email, dob, phone, processing_branch, passport_number, 
                   passport_date_of_issue, passport_date_of_expiry, passport_issue_at, 
                   count_of_expired_passport, expired_passport_number, address_line_1, 
-                  address_line_2, country, state, city, zip, occupation, position, last_updated_by, status) 
+                  address_line_2, country, state, city, zip, occupation, position, last_updated_by) 
                 SELECT id, first_name, last_name, email, dob, phone, processing_branch, passport_number, 
                     passport_date_of_issue, passport_date_of_expiry, passport_issue_at, 
                     count_of_expired_passport, expired_passport_number, address_line_1, 
-                    address_line_2, country, state, city, zip, occupation, position, last_updated_by, status  
+                    address_line_2, country, state, city, zip, occupation, position, last_updated_by  
                 FROM ${constants.TABLES.PASSENGER} WHERE id = ?`;
       await Mysql.query(query, [userId]);
     } catch (e) {
@@ -216,7 +213,7 @@ const passengerRepository = () => {
       let query = `SELECT id, first_name, last_name, email, dob, phone, processing_branch, passport_number, 
       passport_date_of_issue, passport_date_of_expiry, passport_issue_at, 
       count_of_expired_passport, expired_passport_number, address_line_1, 
-      address_line_2, country, state, city, zip, occupation, position, last_updated_by, status FROM ${constants.TABLES.PASSENGER} WHERE `;
+      address_line_2, country, state, city, zip, occupation, position, last_updated_by FROM ${constants.TABLES.PASSENGER} WHERE `;
 
       let where: string = "";
       if (name.length > 0) {

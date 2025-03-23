@@ -16,6 +16,7 @@ export interface UserData {
   password_requested: number;
   last_updated_by: number;
   last_logged_in_at: number;
+  created_at: string;
 }
 
 export interface GetUserDataDBResponse {
@@ -77,7 +78,7 @@ const userRepository = () => {
     try {
       const expiryTime = moment().add(30, "days").format("YYYY-MM-DD HH:mm:ss");
       const query = `UPDATE ${constants.TABLES.USER} 
-                SET status = ?, password = '?', password_valid_till = '?', last_updated_by = ? 
+                SET status = ?, password = ?, password_valid_till = ?, last_updated_by = ? 
                 WHERE id = ?`;
       const params = [status, password, expiryTime, lastUpdatedBy, userId];
       const resp = await Mysql.query(query, params);
@@ -117,8 +118,8 @@ const userRepository = () => {
   //Done
   const getByID = async (id: number): Promise<GetUserDataDBResponse> => {
     try {
-      const query = `SELECT id, name, email, password, status, type, password_requested, last_updated_by, password_valid_till FROM ${constants.TABLES.USER} WHERE id = ? AND status = ?`;
-      const params = [id, constants.STATUS.USER.ACTIVE];
+      const query = `SELECT id, name, email, password, status, type, password_requested, last_updated_by, password_valid_till FROM ${constants.TABLES.USER} WHERE id = ?`;
+      const params = [id];
       return await Mysql.query<UserData[]>(query, params);
     } catch (e) {
       logger.error(`Error in getUserByID: ${generateError(e)}`);
@@ -129,7 +130,7 @@ const userRepository = () => {
   //Done
   const getAll = async (): Promise<GetUserDataDBResponse> => {
     try {
-      const query = `SELECT id, name, email, status, type FROM ${constants.TABLES.USER} order by id desc`;
+      const query = `SELECT id, name, email, status, type, created_at, last_logged_in_at FROM ${constants.TABLES.USER} order by id desc`;
       return await Mysql.query<UserData[]>(query, []);
     } catch (e) {
       logger.error(`Error in getAllUsers: ${generateError(e)}`);

@@ -120,8 +120,8 @@ const applicationRepository = () => {
   //Done
   const searchSubmittedApplicationsByReferenceNumber = async (reference_number: string, status: number): Promise<GetApplicationDataDBResponse> => {
     try {
-      const query = `SELECT id FROM ${constants.TABLES.APPLICATION} WHERE reference_number LIKE '%?%' and status = ?`;
-      const params = [reference_number, status];
+      const query = `SELECT id FROM ${constants.TABLES.APPLICATION} WHERE reference_number LIKE '%${reference_number}%' and status = ?`;
+      const params = [status];
       return await Mysql.query<ApplicationData[]>(query, params);
     } catch (e) {
       logger.error(`Error in searchSubmittedApplicationsByReferenceNumber: ${generateError(e)}`);
@@ -157,14 +157,12 @@ const applicationRepository = () => {
   ): Promise<any> => {
     try {
       const query = `UPDATE ${constants.TABLES.APPLICATION} SET dispatch_medium = ?, 
-          dispatch_medium_number = ?, team_remarks = ?, client_remarks = ?, billing_remarks = ?, status = ?
+          dispatch_medium_number = ?, remarks = ?, status = ?
           WHERE id = ?`;
       const params = [
         request.dispatch_medium,
         request.dispatch_medium_number,
-        request.team_remarks,
-        request.client_remarks,
-        request.billing_remarks,
+        request.remarks,
         constants.STATUS.APPLICATION.STEP4_DONE,
         applicationId,
       ];
@@ -195,7 +193,7 @@ const applicationRepository = () => {
                p.passport_number, p.passport_date_of_issue, p.passport_date_of_expiry, 
                p.passport_issue_at, p.count_of_expired_passport, p.expired_passport_number,
                p.address_line_1, p.address_line_2, p.country, p.state, p.city, p.zip, 
-               p.occupation, p.position, p.status as passenger_status, p.last_updated_by as passenger_updated_by
+               p.occupation, p.position, p.last_updated_by as passenger_updated_by
         FROM ${constants.TABLES.APPLICATION} app
         LEFT JOIN ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} apm ON app.id = apm.application_id
         LEFT JOIN ${constants.TABLES.PASSENGER} p ON apm.passenger_id = p.id
@@ -213,7 +211,7 @@ const applicationRepository = () => {
   };
   
   /**
-   * Update application with step 3 data
+   * Update Step 3 Data
    */
   const updateStep3Data = async (
     data: any,
@@ -228,12 +226,6 @@ const applicationRepository = () => {
           file_number_1 = ?,
           is_travel_date_tentative = ?,
           priority_submission = ?,
-          visa_country = ?,
-          visa_category = ?,
-          nationality = ?,
-          state_id = ?,
-          entry_type = ?,
-          remarks = ?,
           olvt_number = ?,
           external_status = ?,
           status = ?,
@@ -246,12 +238,6 @@ const applicationRepository = () => {
         data.file_number_1,
         data.is_travel_date_tentative,
         data.priority_submission,
-        data.visa_country,
-        data.visa_category,
-        data.nationality,
-        data.state_id,
-        data.entry_type,
-        data.remarks,
         data.olvt_number,
         data.external_status,
         data.status,
@@ -289,15 +275,23 @@ const applicationRepository = () => {
     connection: any
   ): Promise<void> => {
     try {
-      const dateTimeNow = moment().format('YYYY-MM-DD HH:mm:ss');
-      const getApplicationData = await connection.query(
-        `SELECT * FROM ${constants.TABLES.APPLICATION} WHERE id = ?`, [applicationId]
-      );
-      if (getApplicationData.data.length > 0) {
-        const applicationData = getApplicationData.data[0];
-        const historyQuery = `INSERT INTO ${constants.TABLES.APPLICATION_HISTORY} SET ?`;
-        await connection.query(historyQuery, {...applicationData, application_id: applicationId, created_at: dateTimeNow});
-      }
+
+      const query = `INSERT INTO ${constants.TABLES.APPLICATION_HISTORY} 
+                (application_id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by) 
+                SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by 
+                FROM ${constants.TABLES.APPLICATION} WHERE id = ?`;
+      await connection.query(query, [applicationId]);
+
+
+      // const dateTimeNow = moment().format('YYYY-MM-DD HH:mm:ss');
+      // const getApplicationData = await connection.query(
+      //   `SELECT * FROM ${constants.TABLES.APPLICATION} WHERE id = ?`, [applicationId]
+      // );
+      // if (getApplicationData.data.length > 0) {
+      //   const applicationData = getApplicationData.data[0];
+      //   const historyQuery = `INSERT INTO ${constants.TABLES.APPLICATION_HISTORY} SET ?`;
+      //   await connection.query(historyQuery, {...applicationData, application_id: applicationId, created_at: dateTimeNow});
+      // }
     } catch (e) {
       logger.error(`Error in insertHistoryWithConnection: ${generateError(e)}`);
       throw e;

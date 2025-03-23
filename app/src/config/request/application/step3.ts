@@ -8,6 +8,10 @@ const step3: ValidationSchema = {
       type: "number",
       required: true,
     },
+    is_sub_request: {
+      type: "number",
+      required: true,
+    },
     personal_info: {
       type: "object",
       required: true,

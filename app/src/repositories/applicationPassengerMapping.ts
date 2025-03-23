@@ -31,8 +31,8 @@ const applicationPassengerMappingRepository = () => {
       const params = [
         data.application_id,
         data.passenger_id,
-        data.status,
         data.last_updated_by,
+        data.status
       ];
       const resp = await Mysql.query(query, params);
 
@@ -41,7 +41,7 @@ const applicationPassengerMappingRepository = () => {
       }
       return resp;
     } catch (e) {
-      logger.error(`Error in insert: ${generateError(e)}`);
+      logger.error(`Error in applicationPassengerMappingRepository.insert: ${generateError(e)}`);
       throw e;
     }
   };
@@ -55,7 +55,7 @@ const applicationPassengerMappingRepository = () => {
                 FROM ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} WHERE id = ?`;
       await Mysql.query(query, [mappingId]);
     } catch (e) {
-      logger.error(`Error in insertHistory: ${generateError(e)}`);
+      logger.error(`Error in applicationPassengerMappingRepository.insertHistory: ${generateError(e)}`);
       throw e;
     }
   };
@@ -69,7 +69,27 @@ const applicationPassengerMappingRepository = () => {
       const query = `SELECT * FROM ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} WHERE application_id in (?) AND status in (?)`;
       return await Mysql.query<ApplicationPassengerMappingData[]>(query, [application_ids, status]);
     } catch (e) {
-      logger.error(`Error in getByApplicationIds: ${generateError(e)}`);
+      logger.error(`Error in applicationPassengerMappingRepository.getByApplicationIds: ${generateError(e)}`);
+      throw e;
+    }
+  };
+
+   //Done
+   const updateStatus = async (
+    status: number,
+    passengerId: number,
+    applicationId: number,
+    lastUpdatedBy: number
+  ): Promise<any> => {
+    try {
+      const query = `UPDATE ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} 
+                SET status = ?, last_updated_by = ? 
+                WHERE application_id = ? AND passenger_id = ?`;
+      const params = [status, lastUpdatedBy, applicationId, passengerId];
+      const resp = await Mysql.query(query, params);
+      return resp;
+    } catch (e) {
+      logger.error(`Error in applicationPassengerMappingRepository.updateStatus: ${generateError(e)}`);
       throw e;
     }
   };
@@ -113,16 +133,16 @@ const applicationPassengerMappingRepository = () => {
       }
       
       if (resp.data?.insertId) {
-        if (connection) {
-          await insertHistoryWithConnection(resp.data.insertId, connection);
-        } else {
-          await insertHistory(resp.data.insertId);
-        }
+        // if (connection) {
+        //    insertHistoryWithConnection(resp.data.insertId, connection);
+        // } else {
+        //    insertHistory(resp.data.insertId);
+        // }
       }
       
       return resp;
     } catch (e) {
-      logger.error(`Error in createMapping: ${generateError(e)}`);
+      logger.error(`Error in applicationPassengerMappingRepository.createMapping: ${generateError(e)}`);
       throw e;
     }
   };
@@ -157,16 +177,16 @@ const applicationPassengerMappingRepository = () => {
       const result = await connection.query(query, [values]);
       
       // Create history records for each mapping
-      if (result.data?.insertId) {
-        const firstInsertId = result.data.insertId;
-        for (let i = 0; i < applicationIds.length; i++) {
-          await insertHistoryWithConnection(firstInsertId + i, connection);
-        }
-      }
+      // if (result.data?.insertId) {
+      //   const firstInsertId = result.data.insertId;
+      //   for (let i = 0; i < applicationIds.length; i++) {
+      //     await insertHistoryWithConnection(firstInsertId + i, connection);
+      //   }
+      // }
       
       return result;
     } catch (e) {
-      logger.error(`Error in batchCreateMappings: ${generateError(e)}`);
+      logger.error(`Error in applicationPassengerMappingRepository.batchCreateMappings: ${generateError(e)}`);
       throw e;
     }
   };
@@ -174,32 +194,33 @@ const applicationPassengerMappingRepository = () => {
   /**
    * Insert mapping history with connection
    */
-  const insertHistoryWithConnection = async (
-    mappingId: number,
-    connection: any
-  ): Promise<void> => {
-    try {
-      const dateTimeNow = moment().format('YYYY-MM-DD HH:mm:ss');
-      const getMappingData = await connection.query(
-        `SELECT * FROM ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} WHERE id = ?`, [mappingId]
-      );
-      if (getMappingData.data.length > 0) {
-        const mappingData = getMappingData.data[0];
-        const historyQuery = `INSERT INTO ${constants.TABLES.APPLICATION_PASSENGER_MAPPING_HISTORY} SET ?`;
-        await connection.query(historyQuery, {...mappingData, application_passenger_mapping_id: mappingId, created_at: dateTimeNow});
-      }
-    } catch (e) {
-      logger.error(`Error in insertHistoryWithConnection: ${generateError(e)}`);
-      throw e;
-    }
-  };
+  // const insertHistoryWithConnection = async (
+  //   mappingId: number,
+  //   connection: any
+  // ): Promise<void> => {
+  //   try {
+  //     const dateTimeNow = moment().format('YYYY-MM-DD HH:mm:ss');
+  //     const getMappingData = await connection.query(
+  //       `SELECT * FROM ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} WHERE id = ?`, [mappingId]
+  //     );
+  //     if (getMappingData.data.length > 0) {
+  //       const mappingData = getMappingData.data[0];
+  //       const historyQuery = `INSERT INTO ${constants.TABLES.APPLICATION_PASSENGER_MAPPING_HISTORY} SET ?`;
+  //       await connection.query(historyQuery, {...mappingData, application_passenger_mapping_id: mappingId, created_at: dateTimeNow});
+  //     }
+  //   } catch (e) {
+  //     logger.error(`Error in insertHistoryWithConnection: ${generateError(e)}`);
+  //     throw e;
+  //   }
+  // };
 
   return {
     insert,
     insertHistory,
     getByApplicationIds,
     createMapping,
-    batchCreateMappings
+    batchCreateMappings,
+    updateStatus
   };
 };
 
