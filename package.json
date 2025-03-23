@@ -5,15 +5,8 @@
   "main": "server.ts",
   "scripts": {
     "tsc": "tsc",
-    "build": "tsc -p app/tsconfig.json",
-    "dev2": "ts-node-dev app/src/index",
-    "dev3": "ts-node-dev --respawn --transpile-only app/src/index.ts",
     "dev": "tsx app/src/index.ts",
-    "debug": "ts-node --inspect app/src/index.ts",
-    "debug:alt": "tsx --inspect app/src/index.ts",
-    "debug:nodemon": "nodemon",
-    "debug:js": "tsc -p app/tsconfig.json && node --inspect app/build/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsx app/src/index.ts"
   },
   "keywords": [
     "typescript",
