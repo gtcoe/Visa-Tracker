@@ -11,11 +11,11 @@ import { generateRandomString } from "../services/util";
 // const logDir: string = process.env.LOG_DIR || path.join(__dirname, "../logs");
 
 
-// Manually define `__dirname` in ES modules
+// Manually define directory paths
 const currentDir = process.cwd();
-const __dirname = path.dirname(currentDir);
+const appDirname = path.dirname(currentDir);
 
-const logDir: string = process.env.LOG_DIR || path.join(__dirname, "../logs");
+const logDir: string = process.env.LOG_DIR || path.join(appDirname, "../logs");
 
 // Ensure log directory exists
 if (!fs.existsSync(logDir)) {
