@@ -12,8 +12,8 @@ import { generateRandomString } from "../services/util";
 
 
 // Manually define `__dirname` in ES modules
-const __filename = process.cwd()
-const __dirname = path.dirname(__filename);
+const currentDir = process.cwd();
+const __dirname = path.dirname(currentDir);
 
 const logDir: string = process.env.LOG_DIR || path.join(__dirname, "../logs");
 
