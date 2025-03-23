@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, RequestHandler } from "express";
+import { Request, NextFunction, RequestHandler } from "express";
 
 interface AuthRequest extends Request {
   type_required?: number[]; // Assuming it's an array of allowed types

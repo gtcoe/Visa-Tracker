@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, RequestHandler } from "express";
+import { Request, NextFunction, RequestHandler } from "express";
 import httpRequestValidator, {
   ErrorResponse,
 } from "../services/httpRequestValidator";

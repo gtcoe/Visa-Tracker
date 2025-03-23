@@ -116,7 +116,7 @@ class Connection extends Mysql {
   }
 
   async rollback(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       this.connection.rollback(() => resolve());
     });
   }

@@ -10,7 +10,7 @@ const contextMap: Map<number, RequestContext> = new Map();
 // Create async hooks with init & destroy callbacks
 asyncHooks
   .createHook({
-    init: (asyncId: number, type: string, triggerAsyncId: number) => {
+    init: (asyncId: number, _: string, triggerAsyncId: number) => {
       if (contextMap.has(triggerAsyncId)) {
         const parentContext = contextMap.get(triggerAsyncId);
         if (parentContext) {

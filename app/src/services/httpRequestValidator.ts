@@ -26,17 +26,17 @@ interface ValidationSchema {
   [field: string]: ValidationRules;
 }
 
-const skipAble: Record<string, number> = {
-  required: 1,
-  type: 1,
-  length: 1,
-  minValue: 1,
-  maxValue: 1,
-  minLength: 1,
-  maxLength: 1,
-  items: 1,
-  properties: 1,
-};
+// const skipAble: Record<string, number> = {
+//   required: 1,
+//   type: 1,
+//   length: 1,
+//   minValue: 1,
+//   maxValue: 1,
+//   minLength: 1,
+//   maxLength: 1,
+//   items: 1,
+//   properties: 1,
+// };
 
 const validate = (method: string, value: any, rule: any): boolean => {
   switch (method) {
@@ -157,16 +157,16 @@ const maxValue = (value: any, max: number): boolean => {
   return value <= max;
 };
 
-const multiplePattern = (
-  value: any,
-  validation: { validations: any[] }
-): boolean => {
-  for (let i = 0; i < validation.validations.length; ++i) {
-    if (!pattern(value, { validations: validation.validations[i] }))
-      return false;
-  }
-  return true;
-};
+// const multiplePattern = (
+//   value: any,
+//   validation: { validations: any[] }
+// ): boolean => {
+//   for (let i = 0; i < validation.validations.length; ++i) {
+//     if (!pattern(value, { validations: validation.validations[i] }))
+//       return false;
+//   }
+//   return true;
+// };
 
 const generateErrorResponse = (
   type: string,
