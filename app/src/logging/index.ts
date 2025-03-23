@@ -1,6 +1,5 @@
 import { createLogger, format, transports } from "winston";
 import fs from "fs";
-import path from "path";
 import {setRequestContext, getRequestContext} from "../hooks/asyncHooks";
 import { generateRandomString } from "../services/util";
 
