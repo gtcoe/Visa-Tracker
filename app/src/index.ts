@@ -28,7 +28,26 @@ const setupMiddleware = (app: Application) => {
       },
     })
   );
-  app.use(cors());
+  // Allow requests from specific origins
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://be-visa-tracker.vercel.app'
+  ];
+
+  const corsOptions = {
+    origin: function (origin: string | undefined, callback: any) {
+      if (allowedOrigins.indexOf(origin!) !== -1 || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,  // Allow cookies if needed
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Auth_token']
+  };
+  app.use(cors(corsOptions));
   app.disable("x-powered-by");
   app.set("port", PORT);
 
