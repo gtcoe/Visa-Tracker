@@ -41,6 +41,10 @@ const authService = () => {
       // User info not found
       if (!userInfo) {
         response.setStatusCode(400);
+        response.setData(
+          "login_status",
+          constants.SIGN_IN_STATUS_TYPE.EMAIL_NOT_FOUND
+        );
         response.setMessage(constants.SIGN_IN_STATUS_MESSAGE.EMAIL_NOT_FOUND);
         return response;
       }
@@ -56,7 +60,7 @@ const authService = () => {
           constants.SIGN_IN_STATUS_MESSAGE.INCORRECT_PASSWORD
         );
         response.setData(
-          "type",
+          "login_status",
           constants.SIGN_IN_STATUS_TYPE.INCORRECT_PASSWORD
         );
         return response;
@@ -75,7 +79,7 @@ const authService = () => {
               constants.SIGN_IN_STATUS_MESSAGE.EXPIRED_REQUEST_INITIATED
             );
             response.setData(
-              "type",
+              "login_status",
               constants.SIGN_IN_STATUS_TYPE.EXPIRED_REQUEST_INITIATED
             );
           } else {
@@ -85,7 +89,7 @@ const authService = () => {
               constants.SIGN_IN_STATUS_MESSAGE.INACTIVE_BY_ADMIN
             );
             response.setData(
-              "type",
+              "login_status",
               constants.SIGN_IN_STATUS_TYPE.INACTIVE_BY_ADMIN
             );
           }
@@ -100,7 +104,7 @@ const authService = () => {
             constants.SIGN_IN_STATUS_MESSAGE.EXPIRED_REQUEST_NOT_INITIATED
           );
           response.setData(
-            "type",
+            "login_status",
             constants.SIGN_IN_STATUS_TYPE.EXPIRED_REQUEST_NOT_INITIATED
           );
           return response;
@@ -110,7 +114,7 @@ const authService = () => {
         response.setStatusCode(400);
         response.setMessage(constants.SIGN_IN_STATUS_MESSAGE.INACTIVE_BY_ADMIN);
         response.setData(
-          "type",
+          "login_status",
           constants.SIGN_IN_STATUS_TYPE.INACTIVE_BY_ADMIN
         );
         return response;
@@ -127,7 +131,9 @@ const authService = () => {
       await userRepository.updateAfterSuccessfulLogin(userInfo.id);
       response.setStatus(true);
       response.setData("token", token);
-      response.setData("type", constants.SIGN_IN_STATUS_TYPE.SUCCESS);
+      response.setData("login_status", constants.SIGN_IN_STATUS_TYPE.SUCCESS);
+      response.setData("user_type", userInfo.type);
+      response.setData("user_id", userInfo.id);
       return response;
     } catch (e) {
       logger.error(`Error in authService.signIn ${generateError(e)}`);
