@@ -32,12 +32,23 @@ const setupMiddleware = (app: Application) => {
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
-    'https://be-visa-tracker.vercel.app'
+    'https://be-visa-tracker.vercel.app',
+    'https://visa-tracker-gilt.vercel.app',
+    'https://visa-tracker.vercel.app',
+    'https://visaistic.vercel.app',
+    'https://fe-visa-tracker-gtcoes-projects.vercel.app/',
+    // Add your production frontend URL here
   ];
 
   const corsOptions = {
     origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-      if (allowedOrigins.indexOf(origin!) !== -1 || !origin) {
+      // For development or when no origin is provided (like Postman requests)
+      if (!origin || process.env.NODE_ENV === 'development') {
+        callback(null, true);
+        return;
+      }
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
