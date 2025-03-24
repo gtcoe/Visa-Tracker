@@ -36,7 +36,7 @@ const setupMiddleware = (app: Application) => {
     'https://visa-tracker-gilt.vercel.app',
     'https://visa-tracker.vercel.app',
     'https://visaistic.vercel.app',
-    'https://fe-visa-tracker-gtcoes-projects.vercel.app/',
+    'https://fe-visa-tracker-gtcoes-projects.vercel.app',
     // Add your production frontend URL here
   ];
 
