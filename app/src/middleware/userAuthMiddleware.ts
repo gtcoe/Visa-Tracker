@@ -31,6 +31,7 @@ const verifyToken = async (
 
   try {
     const decoded = jwt.verify(token, config.jwtSecret) as DecodedToken;
+    console.log("==========>decoded", decoded);
 
     // Fetch user details from DB
     const query = `SELECT name, email, status, type, password_valid_till FROM users WHERE id = ?`;
