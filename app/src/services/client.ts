@@ -116,6 +116,7 @@ const clientService = () => {
       }
       response.setStatus(true);
       response.setData("clients_info", clientResponse.data);
+      return response;
     } catch (error) {
       console.error("Error in getClientsByType service:", error);
       throw error;

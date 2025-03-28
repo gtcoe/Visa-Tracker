@@ -121,8 +121,7 @@ const clientRepository = () => {
    */
   const getClientsByType = async (clientType: number) => {
     try {
-      const query = `
-        SELECT user_id, name FROM ${constants.TABLES.CLIENT} WHERE type = ? ORDER BY name ASC`;
+      const query = `SELECT user_id, name FROM ${constants.TABLES.CLIENT} WHERE type = ? ORDER BY name ASC`;
     
       return await Mysql.query<ClientData[]>(query, [clientType]);
 
