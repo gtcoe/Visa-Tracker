@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 import { logger } from "../logging";
 import authConfig from "../config/auth";
-import constants from "../config/constants";
+import constants from "../config/constants/constants";
 import { generateError, generateRandomString } from "../services/util";
 import Response from "../models/response";
 import userRepositoryFactory, {

@@ -63,6 +63,7 @@ const constants = {
       DEFAULT: 0,
       AGENT: 1,
       CORPORATE: 2,
+      WALK_IN: 3,
     },
   },
 
@@ -99,6 +100,20 @@ const constants = {
       "Your password has expired. Request a new password to continue.",
     EMAIL_NOT_FOUND: "Email does not exist.",
   },
+  VISA_CATEGORY: {
+    BUSINESS: 1,
+    WORK: 2
+  },
+  NATIONALITY: {
+    INDIAN: 1
+  },
+  ENTRY_TYPE: {
+    NORMAL: 1
+  },
+  PROCESSING_BRANCH: {
+    VISAISTIC_DELHI: 1
+  }
+
 };
 
 export default constants;

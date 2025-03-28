@@ -2,7 +2,7 @@ import userController from "../controllers/user";
 import hasPermission from "../middleware/roleAuthMiddleware";
 import requestValidator from "../middleware/requestValidatorMiddleware";
 import userRequestValidationConfig from "../config/request/user";
-import constants from "../config/constants";
+import constants from "../config/constants/constants";
 import { express, NextFunction, Router } from "../app";
 
 // Helper middleware to assign role-based permissions

@@ -1,5 +1,5 @@
 import { ValidationSchema } from "../interface/request";
-import constants from "../../constants";
+import constants from "../../constants/constants";
 
 const add: ValidationSchema = {
   body: {

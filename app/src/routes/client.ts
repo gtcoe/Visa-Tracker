@@ -2,7 +2,7 @@ import clientController from "../controllers/client";
 import hasPermission from "../middleware/roleAuthMiddleware";
 import requestValidator from "../middleware/requestValidatorMiddleware";
 import clientRequestValidationConfig from "../config/request/client";
-import constants from "../config/constants";
+import constants from "../config/constants/constants";
 import { express, NextFunction, Router } from "../app";
 
 // Helper middleware to assign role-based permissions
@@ -27,6 +27,18 @@ clientRouter
     ]),
     requestValidator(clientRequestValidationConfig.get),
     clientController.getAll
+  );
+
+// Get clients by type
+clientRouter
+  .route("/byType/:type")
+  .get(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+    ]),
+    requestValidator(clientRequestValidationConfig.getByType),
+    clientController.getByType
   );
 
 // Create client

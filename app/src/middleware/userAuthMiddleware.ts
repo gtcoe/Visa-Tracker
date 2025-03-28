@@ -1,7 +1,7 @@
 import { Request, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import config from "../config/auth";
-import constants from "../config/constants";
+import constants from "../config/constants/constants";
 import MySql from "../database/mySql";
 import dayjs from "dayjs"; // Lighter alternative to moment.js
 import { UserData, GetUserDataDBResponse } from "../repositories/user";

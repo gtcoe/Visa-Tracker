@@ -1,4 +1,4 @@
-import constants from "../config/constants";
+import constants from "../config/constants/constants";
 import { generateError } from "../services/util";
 import { logger } from "../logging";
 import Mysql from "../database/mySql";

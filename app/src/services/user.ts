@@ -1,7 +1,7 @@
 import moment from "moment";
 import bcrypt from "bcrypt";
 
-import constants from "../config/constants";
+import constants from "../config/constants/constants";
 import { logger } from "../logging";
 import Response from "../models/response";
 import { generateError, generateRandomString } from "../services/util";

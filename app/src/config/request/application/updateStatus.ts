@@ -1,4 +1,4 @@
-import constants from "../../constants";
+import constants from "../../constants/constants";
 import { ValidationSchema } from "../interface/request";
 
 const validationSchema: ValidationSchema = {

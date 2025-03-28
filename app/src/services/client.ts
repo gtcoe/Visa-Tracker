@@ -1,7 +1,7 @@
 import moment from "moment";
 import bcrypt from "bcrypt";
 
-import constants from "../config/constants";
+import constants from "../config/constants/constants";
 import { logger } from "../logging";
 import Response from "../models/response";
 import { generateError, generateRandomString } from "./util";
@@ -101,9 +101,31 @@ const clientService = () => {
     }
   };
 
+  /**
+   * Get clients by client type
+   * @param clientType The type of client to filter by (1=Corporate, 2=Agent, 3=Walk-in)
+   * @returns List of clients of the specified type
+   */
+  const getClientsByType = async (clientType: number) => {
+    const response = new Response(false);
+    try {
+      const clientResponse = await clientRepository.getClientsByType(clientType);
+        // Error Fetching userInfo
+      if (!clientResponse || !clientResponse.status) {
+        throw new Error("unable to fetch user info");
+      }
+      response.setStatus(true);
+      response.setData("clients_info", clientResponse.data);
+    } catch (error) {
+      console.error("Error in getClientsByType service:", error);
+      throw error;
+    }
+  };
+
   return {
     getAll,
     create,
+    getClientsByType,
   };
 };
 

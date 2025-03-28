@@ -1,4 +1,4 @@
-import constants from "../config/constants";
+import constants from "../config/constants/constants";
 import { generateError } from "../services/util";
 import { logger } from "../logging";
 import Mysql from "../database/mySql";
@@ -114,12 +114,40 @@ const clientRepository = () => {
     }
   };
 
+  /**
+   * Get clients by client type
+   * @param clientType The type of client to filter by (1=Corporate, 2=Agent, 3=Walk-in)
+   * @returns List of clients of the specified type
+   */
+  const getClientsByType = async (clientType: number) => {
+    try {
+      const query = `
+        SELECT 
+          user_id,
+          name
+        FROM 
+          client
+        WHERE 
+          type = ?
+        ORDER BY 
+          name ASC
+      `;
+    
+      return await Mysql.query<ClientData[]>(query, [clientType]);
+
+    } catch (error) {
+      console.error("Error in getClientsByType repository:", error);
+      throw error;
+    }
+  };
+
   return {
     insert,
     insertHistory,
     getAll,
     getByUserId,
     getClientByEmail,
+    getClientsByType,
   };
 };
 

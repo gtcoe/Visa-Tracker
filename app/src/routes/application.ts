@@ -2,7 +2,7 @@ import applicationController from "../controllers/application";
 import hasPermission from "../middleware/roleAuthMiddleware";
 import requestValidator from "../middleware/requestValidatorMiddleware";
 import applicationRequestValidationConfig from "../config/request/application";
-import constants from "../config/constants";
+import constants from "../config/constants/constants";
 import { express, NextFunction, Router } from "../app";
 
 // Helper middleware to assign role-based permissions
@@ -78,7 +78,10 @@ applicationRouter
 applicationRouter
   .route("/search")
   .post(
-    ...withAuth([constants.USER_TABLE.TYPE.ADMIN]),
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+      constants.USER_TABLE.TYPE.CLIENT]),
     requestValidator(applicationRequestValidationConfig.search),
     applicationController.search
   );

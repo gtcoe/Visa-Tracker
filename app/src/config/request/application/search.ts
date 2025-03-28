@@ -10,8 +10,8 @@ const search: ValidationSchema = {
       type: "number",
       required: false,
     },
-    customer: {
-      type: "string",
+    client_user_id: {
+      type: "number",
       required: false,
     },
     name: {

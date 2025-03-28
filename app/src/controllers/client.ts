@@ -17,7 +17,7 @@ const ClientController = () => {
       res.send(resp);
     } catch (e: any) {
       const response = new ResponseModel(false);
-      logger.error(`Error in get: ${generateError(e)}`);
+      logger.error(`Error in ClientController.get: ${generateError(e)}`);
       response.message = "Internal Server Error";
       res.status(500).send(response);
     }
@@ -39,9 +39,25 @@ const ClientController = () => {
     }
   };
 
+  const getByType = async (req: Request, res: Response) => {
+    try {
+      const { type } = req.params;
+      const clientType = parseInt(type);
+      
+      const resp = await clientService.getClientsByType(clientType);
+      res.send(resp);
+    } catch (error) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in ClientController.getByType: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
+    }
+  };
+
   return {
     getAll,
     create,
+    getByType,
   };
 };
 
