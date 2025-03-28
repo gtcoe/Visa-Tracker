@@ -126,7 +126,7 @@ const clientRepository = () => {
           user_id,
           name
         FROM 
-          client
+          FROM ${constants.TABLES.CLIENT}
         WHERE 
           type = ?
         ORDER BY 
