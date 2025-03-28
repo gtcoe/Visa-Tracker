@@ -46,7 +46,7 @@ const ClientController = () => {
       
       const resp = await clientService.getClientsByType(clientType);
       res.send(resp);
-    } catch (error) {
+    } catch (e) {
       const response = new ResponseModel(false);
       logger.error(`Error in ClientController.getByType: ${generateError(e)}`);
       response.message = "Internal Server Error";
