@@ -42,6 +42,13 @@ const ClientController = () => {
   const getByType = async (req: Request, res: Response) => {
     try {
       const { type } = req.params;
+      if (!type) {
+        res.status(400).send({
+          status: false,
+          message: "Type is required as path parameter",
+        });
+        return;
+      }
       const clientType = parseInt(type);
       
       const resp = await clientService.getClientsByType(clientType);
