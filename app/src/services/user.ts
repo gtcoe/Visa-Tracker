@@ -11,6 +11,7 @@ import userRepositoryFactory, {
 } from "../repositories/user";
 import { AddUserRequest } from "../models/User/addUserRequest";
 import { UpdateUserStatusRequest } from "../models/User/updateUserStatusRequest";
+import emailService from "../services/email";
 
 const userService = () => {
   const userRepository = userRepositoryFactory();
@@ -123,7 +124,6 @@ const userService = () => {
 
       // Generate a random password.
       const password = generateRandomString(12);
-      console.log("====>password",request.email, password);
       request.password = bcrypt.hashSync(password, 15);
       request.password_valid_till = moment(new Date())
         .add(30, "days")
@@ -137,6 +137,15 @@ const userService = () => {
       if (!resp.status) {
         throw new Error("Unable to create user");
       }
+
+      const emailSvc = emailService();
+      emailSvc.sendEmail({
+        type: constants.EMAIL_TYPE.WELCOME,
+        data: {
+          password: password
+        },
+        email_id: request.email
+      });
 
       response.setStatus(true);
       response.setMessage("User created successfully.");
@@ -189,6 +198,15 @@ const userService = () => {
         if (!resp.status) {
           throw new Error("Unable to update user status");
         }
+
+        const emailSvc = emailService();
+        emailSvc.sendEmail({
+          type: constants.EMAIL_TYPE.WELCOME,
+          data: {
+            password: password
+          },
+          email_id: userInfo.email
+        });
 
         // todo send email
       } else if (request.status === constants.STATUS.USER.INACTIVE) {
