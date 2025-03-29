@@ -4,6 +4,7 @@ import userRouter from "./user";
 import clientRouter from "./client";
 import applicationRouter from "./application";
 import authRouter from "./auth";
+import emailRouter from "./email";
 import { Router } from "express";
 const app = Router(); 
 
@@ -12,6 +13,7 @@ app.use(routerConfig.USER_ROUTE, verifyToken, userRouter);
 app.use(routerConfig.CLIENT_ROUTE, verifyToken, clientRouter);
 app.use(routerConfig.APPLICATION_ROUTE, verifyToken, applicationRouter);
 app.use(routerConfig.AUTH_ROUTE, authRouter);
+app.use(routerConfig.EMAIL_ROUTE, verifyToken, emailRouter);
 
 // Handle 404 errors
 app.use((_: any, res: any) => {

@@ -112,6 +112,12 @@ const constants = {
   },
   PROCESSING_BRANCH: {
     VISAISTIC_DELHI: 1
+  },
+  EMAIL_TYPE: {
+    WELCOME: 1,
+    PASSWORD_RESET: 2,
+    APPLICATION_STATUS: 3,
+    NOTIFICATION: 4
   }
 
 };
