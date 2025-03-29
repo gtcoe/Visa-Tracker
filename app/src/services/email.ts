@@ -50,10 +50,10 @@ const emailService = () => {
                 <p>Please login to your account to view more details.</p>`
         };
       
-      case constants.EMAIL_TYPE.NOTIFICATION:
+      case constants.EMAIL_TYPE.CHECKLIST:
         return {
-          subject: data?.subject || 'Notification from Visa Tracker',
-          html: data?.content || '<p>You have a new notification from Visa Tracker.</p>'
+          subject: data?.subject || 'Checklist Is Ready',
+          html: data?.content || '<p>You will receive the checklist here soooooooooon!!!</p>'
         };
       
       default:

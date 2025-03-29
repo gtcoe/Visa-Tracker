@@ -201,7 +201,7 @@ const userService = () => {
 
         const emailSvc = emailService();
         emailSvc.sendEmail({
-          type: constants.EMAIL_TYPE.WELCOME,
+          type: constants.EMAIL_TYPE.PASSWORD_RESET,
           data: {
             password: password
           },

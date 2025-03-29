@@ -117,7 +117,7 @@ const constants = {
     WELCOME: 1,
     PASSWORD_RESET: 2,
     APPLICATION_STATUS: 3,
-    NOTIFICATION: 4
+    CHECKLIST: 4
   }
 
 };
