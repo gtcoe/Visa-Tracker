@@ -72,34 +72,57 @@ const emailService = () => {
       // Get email content based on type
       const { subject, html } = getEmailContent(request.type, request.data);
       
-      // Define email options
-      const mailOptions = {
-        from: process.env.SMTP_FROM || 'Visa Tracker <garvittyagicoe@gmail.com>',
-        to: request.email_id,
-        subject,
-        html
-      };
-      
-      // Send email
-      const info = await transporter.sendMail(mailOptions);
-      
-      if (!info) {
-        throw new Error('Failed to send email');
+      if (!request.emails || request.emails.length === 0) {
+        response.setMessage('No email recipients provided');
+        return response;
+      }
+
+      // Send emails to all recipients
+      const results = [];
+      for (const email of request.emails) {
+        // Define email options
+        const mailOptions = {
+          from: process.env.SMTP_FROM || 'Visa Tracker <garvittyagicoe@gmail.com>',
+          to: email,
+          subject,
+          html
+        };
+        
+        // Send email
+        const info = await transporter.sendMail(mailOptions);
+        
+        if (info) {
+          logger.info(`Email sent successfully to ${email}. Message ID: ${info.messageId}`);
+          results.push({
+            email,
+            messageId: info.messageId,
+            status: 'sent'
+          });
+        } else {
+          results.push({
+            email,
+            status: 'failed'
+          });
+        }
       }
       
-      logger.info(`Email sent successfully to ${request.email_id}. Message ID: ${info.messageId}`);
+      // Check if any emails were sent successfully
+      if (results.length === 0 || results.every(r => r.status === 'failed')) {
+        throw new Error('Failed to send all emails');
+      }
       
       response.setStatus(true);
-      response.setMessage('Email sent successfully');
+      response.setMessage('Emails sent successfully');
       response.setData('email_info', {
-        messageId: info.messageId,
-        recipient: request.email_id
+        sent: results.filter(r => r.status === 'sent').length,
+        failed: results.filter(r => r.status === 'failed').length,
+        details: results
       });
       
       return response;
     } catch (e) {
       logger.error(`Error in emailService.sendEmail - ${generateError(e)}`);
-      response.setMessage('Failed to send email');
+      response.setMessage('Failed to send email(s)');
       return response;
     }
   };

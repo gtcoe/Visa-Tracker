@@ -9,7 +9,7 @@ export enum EMAIL_TYPE {
 }
 
 export interface SendEmailRequest {
-  email_id: string;
+  emails: string[];
   type: EMAIL_TYPE;
   data?: Record<string, any>; // Optional data for email templates
 }
@@ -21,7 +21,7 @@ export const convertRequestToSendEmailRequest = (
   requestBody: any
 ): SendEmailRequest => {
   return {
-    email_id: requestBody.email_id,
+    emails: requestBody.emails || [],
     type: requestBody.type,
     data: requestBody.data || {}
   };

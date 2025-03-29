@@ -144,7 +144,7 @@ const userService = () => {
         data: {
           password: password
         },
-        email_id: request.email
+        emails: [request.email]
       });
 
       response.setStatus(true);
@@ -205,7 +205,7 @@ const userService = () => {
           data: {
             password: password
           },
-          email_id: userInfo.email
+          emails: [userInfo.email]
         });
 
         // todo send email
