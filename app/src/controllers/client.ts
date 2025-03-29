@@ -61,10 +61,31 @@ const ClientController = () => {
     }
   };
 
+  const search = async (req: Request, res: Response): Promise<void> => {
+    const response = new ResponseModel(false);
+    try {
+      const { text } = req.body;
+
+      if (!text) {
+        response.message = "Search text is required.";
+        res.status(400).send(response);
+        return;
+      }
+
+      const resp = await clientService.search(text);
+      res.send(resp);
+    } catch (e: any) {
+      logger.error(`Error in ClientController.search: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
+    }
+  };
+
   return {
     getAll,
     create,
     getByType,
+    search
   };
 };
 

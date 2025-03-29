@@ -53,4 +53,17 @@ clientRouter
     clientController.create
   );
 
+// Search clients
+clientRouter
+  .route("/search")
+  .post(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+      constants.USER_TABLE.TYPE.CLIENT,
+    ]),
+    requestValidator(clientRequestValidationConfig.search),
+    clientController.search
+  );
+
 export default clientRouter;

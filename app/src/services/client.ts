@@ -123,10 +123,32 @@ const clientService = () => {
     }
   };
 
+  const search = async (text: string): Promise<any> => {
+    const response = new Response(false);
+    try {
+      const clientResponse: GetClientDataDBResponse = await clientRepository.search(
+        text
+      );
+
+      // Error Fetching client info
+      if (!clientResponse || !clientResponse.status) {
+        throw new Error("unable to fetch client info");
+      }
+
+      response.setStatus(true);
+      response.setData("clients_info", clientResponse.data);
+      return response;
+    } catch (e) {
+      logger.error(`error in clientService.search - ${generateError(e)}`);
+      throw e;
+    }
+  };
+
   return {
     getAll,
     create,
     getClientsByType,
+    search
   };
 };
 

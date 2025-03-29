@@ -131,6 +131,20 @@ const clientRepository = () => {
     }
   };
 
+  const search = async (text: string): Promise<GetClientDataDBResponse> => {
+    try {
+      const query = `SELECT id, user_id, name, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email 
+                    FROM ${constants.TABLES.CLIENT} 
+                    WHERE owner_email LIKE ? OR spoke_email LIKE ? 
+                    ORDER BY id DESC`;
+      const params = [`%${text}%`, `%${text}%`];
+      return await Mysql.query<ClientData[]>(query, params);
+    } catch (e) {
+      logger.error(`Error in search clients: ${generateError(e)}`);
+      throw e;
+    }
+  };
+
   return {
     insert,
     insertHistory,
@@ -138,6 +152,7 @@ const clientRepository = () => {
     getByUserId,
     getClientByEmail,
     getClientsByType,
+    search
   };
 };
 
