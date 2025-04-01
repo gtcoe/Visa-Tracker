@@ -66,4 +66,16 @@ clientRouter
     clientController.search
   );
 
+// Get client by client_user_id
+clientRouter
+  .route("/byClientUserId/:client_user_id")
+  .get(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+    ]),
+    requestValidator(clientRequestValidationConfig.getByClientUserId),
+    clientController.getByClientUserId
+  );
+
 export default clientRouter;

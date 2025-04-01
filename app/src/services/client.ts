@@ -158,11 +158,48 @@ const clientService = () => {
     }
   };
 
+  /**
+   * Get client by client_user_id
+   * @param clientUserId The user ID of the client to retrieve
+   * @returns Client data with the specified client_user_id
+   */
+  const getClientByUserId = async (clientUserId: number): Promise<Response> => {
+    const response = new Response(false);
+    try {
+      if (!clientUserId) {
+        response.setStatusCode(400);
+        response.setMessage("Client User ID is required.");
+        return response;
+      }
+
+      const clientResponse: GetClientDataDBResponse = await clientRepository.getByClientUserId(clientUserId);
+
+      // Error Fetching client info
+      if (!clientResponse || !clientResponse.status) {
+        throw new Error("unable to fetch client info");
+      }
+
+      if (!clientResponse.data || clientResponse.data.length === 0) {
+        response.setMessage("No client found with the provided ID");
+        return response;
+      }
+
+      response.setStatus(true);
+      response.setMessage("Client retrieved successfully");
+      response.setData("client_info", clientResponse.data[0]);
+      return response;
+    } catch (e) {
+      logger.error(`error in clientService.getClientByUserId - ${generateError(e)}`);
+      throw e;
+    }
+  };
+
   return {
     getAll,
     create,
     getClientsByType,
-    search
+    search,
+    getClientByUserId
   };
 };
 

@@ -158,6 +158,26 @@ const clientRepository = () => {
     }
   };
 
+  /**
+   * Get client by client_user_id
+   * @param clientUserId The user ID associated with the client
+   * @returns Client data for the specified user ID
+   */
+  const getByClientUserId = async (
+    clientUserId: number
+  ): Promise<GetClientDataDBResponse> => {
+    try {
+      const query = `SELECT id, name, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by 
+                     FROM ${constants.TABLES.CLIENT} 
+                     WHERE user_id = ?`;
+      const params = [clientUserId];
+      return await Mysql.query<ClientData[]>(query, params);
+    } catch (e) {
+      logger.error(`Error in getByClientUserId: ${generateError(e)}`);
+      throw e;
+    }
+  };
+
   return {
     insert,
     insertHistory,
@@ -165,7 +185,8 @@ const clientRepository = () => {
     getByUserId,
     getClientByEmail,
     getClientsByType,
-    search
+    search,
+    getByClientUserId
   };
 };
 

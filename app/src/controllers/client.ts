@@ -81,11 +81,34 @@ const ClientController = () => {
     }
   };
 
+  const getByClientUserId = async (req: Request, res: Response) => {
+    try {
+      const { client_user_id } = req.params;
+      if (!client_user_id) {
+        res.status(400).send({
+          status: false,
+          message: "Client User ID is required as path parameter",
+        });
+        return;
+      }
+      
+      const clientUserId = parseInt(client_user_id);
+      const resp = await clientService.getClientByUserId(clientUserId);
+      res.send(resp);
+    } catch (e) {
+      const response = new ResponseModel(false);
+      logger.error(`Error in ClientController.getByClientUserId: ${generateError(e)}`);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
+    }
+  };
+
   return {
     getAll,
     create,
     getByType,
-    search
+    search,
+    getByClientUserId
   };
 };
 
