@@ -49,11 +49,82 @@ const emailService = () => {
                 <p>Your application (${data?.referenceNo || 'Unknown'}) status has been updated to: ${data?.status || 'Unknown'}.</p>
                 <p>Please login to your account to view more details.</p>`
         };
-      
-      case constants.EMAIL_TYPE.CHECKLIST:
+
+      case constants.EMAIL_TYPE.CREDENTIALS:
         return {
-          subject: data?.subject || 'Checklist Is Ready',
-          html: data?.content || '<p>You will receive the checklist here soooooooooon!!!</p>'
+          subject: `Your Visaistic Portal Access Credentials`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+              <h2 style="color: #333;">Subject: Your Visaistic Portal Access Credentials</h2>
+              
+              <p>Dear ${data?.fullName || 'User'},</p>
+              
+              <p>Greetings from team Visaistic</p>
+              
+              <p>We are pleased to provide you with access to the<strong>Visaistic Portal</strong>. Please find your permanent login credentials below:</p>
+              
+              <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #1e4c94; margin: 20px 0;">
+                <p><strong>Portal URL</strong>: ${data?.URL || 'https://portal.visaistic.com'}</p>
+                <p><strong>Username</strong>: ${data?.email || '{user@example.com}'}</p>
+                <p><strong>Password</strong>: ${data?.password || '{UserPassword}'}</p>
+              </div>
+              
+              <h3 style="color: #1e4c94;">For Your Security</h3>
+              <ul style="padding-left: 20px;">
+                <li>These are your permanent credentials - please store them securely</li>
+                <li>Never share your password with anyone, including support staff</li>
+                <li>Always verify you're on our official portal before logging in</li>
+              </ul>
+              
+              <h3 style="color: #1e4c94;">Getting Started</h3>
+              <p><strong>Step 1</strong>: Visit the portal using the link above</p>
+              <p><strong>Step 2</strong>: Enter your username and password</p>
+              <p><strong>Step 3</strong>: Explore the portal dashboard</p>
+              
+              <div style="margin-top: 30px;">
+                <h3 style="color: #1e4c94;">Need Help?</h3>
+                <p>Contact our support team:</p>
+                <p>📧 support@visaistic.com</p>
+                <p>(Mon-Saturday, 10AM-7PM [Time Zone])</p>
+              </div>
+              
+              <p style="font-style: italic; color: #777; margin-top: 30px;">Note: This is an automated message. Please do not reply directly to this email.</p>
+              
+              <p>Warm regards,<br>The Visaistic Team</p>
+            </div>
+          `
+        };
+
+      case constants.EMAIL_TYPE.DOCUMENT_CHECKLIST:
+        return {
+          subject: `Visa Document Checklist for ${data?.nationality || '{NATIONALITY}'} Applicants - ${data?.country || '{COUNTRY}'} ${data?.category || '{CATEGORY}'} Visa`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+              <h2 style="color: #333;">Subject: Visa Document Checklist for ${data?.nationality || '{NATIONALITY}'} Applicants - ${data?.country || '{COUNTRY}'} ${data?.category || '{CATEGORY}'} Visa</h2>
+              
+              <p>Dear ${data?.recipientName || '{Recipient Name}'},</p>
+              
+              <p>We are pleased to provide you with the official document checklist for your upcoming ${data?.country || '{COUNTRY}'} ${data?.category || '{CATEGORY}'} visa application. This checklist has been specifically tailored for applicants of ${data?.nationality || '{NATIONALITY}'} nationality to ensure compliance with all current immigration requirements.</p>
+              
+              <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #1e4c94; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #1e4c94;">Attachment:</h3>
+                <p>${data?.country || '{COUNTRY}'}_${data?.category || '{CATEGORY}'}_Visa_Checklist_${data?.nationality || '{NATIONALITY}'}_${data?.date || '{YYYYMMDD}'}.pdf</p>
+              </div>
+              
+              <p>Should you require any clarification regarding the documentation requirements or need assistance with your application, our visa specialists are available at ${data?.supportEmail || 'support@visaistic.com'} or ${data?.supportPhone || '[+support phone number]'} during regular business hours.</p>
+              
+              <p>Please note that this checklist reflects requirements as of ${data?.currentDate || '[current date]'} and is subject to change without prior notice. We recommend verifying all information with the relevant ${data?.country || '{COUNTRY}'} consular authority prior to submission.</p>
+              
+              <div style="margin-top: 30px;">
+                <p>Should you require any clarification or assistance with your application, our visa specialists are available at:</p>
+                <p>📧 <a href="mailto:support@visaistic.com" style="color: #1e4c94; text-decoration: none;">support@visaistic.com</a> | (Mon-Saturday, 10AM-7PM [Time Zone])</p>
+              </div>
+              
+              <p>We appreciate your attention to these requirements and wish you success with your ${data?.country || '{COUNTRY}'} visa application.</p>
+              
+              <p>Warm regards,<br>The Visaistic Team</p>
+            </div>
+          `
         };
       
       default:

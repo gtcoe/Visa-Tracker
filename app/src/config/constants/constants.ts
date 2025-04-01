@@ -117,8 +117,10 @@ const constants = {
     WELCOME: 1,
     PASSWORD_RESET: 2,
     APPLICATION_STATUS: 3,
-    CHECKLIST: 4
-  }
+    CREDENTIALS: 4,
+    DOCUMENT_CHECKLIST: 5
+  },
+  LOGIN_URL: 'https://fe-visa-tracker-gtcoes-projects.vercel.app/visaistic'
 
 };
 

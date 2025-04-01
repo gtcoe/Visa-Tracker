@@ -130,8 +130,6 @@ const userService = () => {
         .format("YYYY-MM-DD HH:mm:ss");
       request.status = constants.STATUS.USER.ACTIVE;
 
-      // TODO: Send email with the randomly generated password.
-
       // Create User
       const resp: any = await userRepository.insertUser(request);
       if (!resp.status) {
@@ -140,9 +138,12 @@ const userService = () => {
 
       const emailSvc = emailService();
       emailSvc.sendEmail({
-        type: constants.EMAIL_TYPE.WELCOME,
+        type: constants.EMAIL_TYPE.CREDENTIALS,
         data: {
-          password: password
+          fullName: request.name,
+          email: request.email,
+          password: password,
+          URL: constants.LOGIN_URL
         },
         emails: [request.email]
       });

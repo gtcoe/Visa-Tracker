@@ -5,7 +5,8 @@ export enum EMAIL_TYPE {
   WELCOME = 1,
   PASSWORD_RESET = 2,
   APPLICATION_STATUS = 3,
-  NOTIFICATION = 4
+  CREDENTIALS = 4,
+  DOCUMENT_CHECKLIST = 5
 }
 
 export interface SendEmailRequest {
