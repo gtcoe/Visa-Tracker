@@ -227,7 +227,7 @@ const emailService = () => {
       switch (request.type) {
         case constants.EMAIL_TYPE.DOCUMENT_CHECKLIST:
           // Get client information from database
-          const clientInfo = await clientRepository.getClientByEmail([request.emails[0]]);
+          const clientInfo = await clientRepository.getClientByEmail(request.emails);
           
           if (!(clientInfo.data && clientInfo.data.length === request.emails.length)) {
             logger.error(`invalid_email_passed: ${generateError(request)}`);
