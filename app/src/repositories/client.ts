@@ -110,11 +110,11 @@ const clientRepository = () => {
 
   //Done
   const getClientByEmail = async (
-    email: string
+    emails: string[]
   ): Promise<GetClientDataDBResponse> => {
     try {
-      const query = `SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by FROM ${constants.TABLES.CLIENT} WHERE owner_email = '?' ORDER BY id DESC LIMIT 1`;
-      const params = [email];
+      const query = `SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by FROM ${constants.TABLES.CLIENT} WHERE owner_email in (?) ORDER BY id DESC`;
+      const params = [emails.join(',')];
       return await Mysql.query<ClientData[]>(query, params);
     } catch (e) {
       logger.error(`Error in getClientByEmail: ${generateError(e)}`);

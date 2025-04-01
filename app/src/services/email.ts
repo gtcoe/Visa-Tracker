@@ -4,6 +4,9 @@ import Response from "../models/response";
 import { generateError } from "./util";
 import { SendEmailRequest, EMAIL_TYPE } from "../models/Email/sendEmailRequest";
 import constants from "../config/constants/constants";
+import ClientRepository, {
+} from "../repositories/client";
+import { COUNTRY, COUNTRY_DISPLAY_NAME, VISA_CATEGORY, VISA_CATEGORY_LABELS, NATIONALITY, NATIONALITY_LABELS } from "../config/constants/geographical";
 
 // Create a nodemailer transporter
 const createTransporter = () => {
@@ -25,6 +28,8 @@ const createTransporter = () => {
 };
 
 const emailService = () => {
+  const clientRepository = ClientRepository();
+
   // Get email content based on email type
   const getEmailContent = (type: EMAIL_TYPE, data?: Record<string, any>) => {
     switch (type) {
@@ -110,10 +115,10 @@ const emailService = () => {
               
               <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #1e4c94; margin: 20px 0;">
                 <h3 style="margin-top: 0; color: #1e4c94;">Attachment:</h3>
-                <p>${data?.country || '{COUNTRY}'}_${data?.category || '{CATEGORY}'}_Visa_Checklist_${data?.nationality || '{NATIONALITY}'}_${data?.date || '{YYYYMMDD}'}.pdf</p>
+                <p>${data?.country || '{COUNTRY}'}_${data?.category || '{CATEGORY}'}_Visa_Checklist_${data?.nationality || '{NATIONALITY}'}'}.pdf</p>
               </div>
               
-              <p>Should you require any clarification regarding the documentation requirements or need assistance with your application, our visa specialists are available at ${data?.supportEmail || 'support@visaistic.com'} or ${data?.supportPhone || '[+support phone number]'} during regular business hours.</p>
+              <p>Should you require any clarification regarding the documentation requirements or need assistance with your application, our visa specialists are available at support@visaistic.com or +9999999999 during regular business hours.</p>
               
               <p>Please note that this checklist reflects requirements as of ${data?.currentDate || '[current date]'} and is subject to change without prior notice. We recommend verifying all information with the relevant ${data?.country || '{COUNTRY}'} consular authority prior to submission.</p>
               
@@ -140,10 +145,12 @@ const emailService = () => {
   const sendEmail = async (request: SendEmailRequest): Promise<Response> => {
     const response = new Response(false);
     try {
+
+      const req = await updateEmailRequest(request);
       const transporter = createTransporter();
       
       // Get email content based on type
-      const { subject, html } = getEmailContent(request.type, request.data);
+      const { subject, html } = getEmailContent(request.type, req);
       
       if (!request.emails || request.emails.length === 0) {
         response.setMessage('No email recipients provided');
@@ -199,6 +206,30 @@ const emailService = () => {
       response.setMessage('Failed to send email(s)');
       return response;
     }
+  };
+
+  const updateEmailRequest = async (request: SendEmailRequest): Promise<Record<string, any>> => {
+    if (request.type === constants.EMAIL_TYPE.DOCUMENT_CHECKLIST) {
+      const clientinfo = await clientRepository.getClientByEmail(request.emails);
+      if (!(clientinfo.data && clientinfo.data.length == request.emails.length)) {
+        logger.error(`invalid_email_passed`, request);
+        throw new Error('invalid_email_passed');
+      }
+      let clientData: Record<string, any> = {};
+      for (const client of clientinfo.data) {
+        clientData[client.owner_email] = {
+          recipientName: client.name,
+          country: COUNTRY_DISPLAY_NAME[request.data?.country as COUNTRY],
+          category: VISA_CATEGORY_LABELS[request.data?.category as VISA_CATEGORY],
+          nationality: NATIONALITY_LABELS[request.data?.nationality as NATIONALITY],
+          currentDate: new Date().toISOString().split('T')[0],
+        };
+      }
+      return clientData;
+    } else {
+      return request.data || {}; // Return empty object if data is undefined
+    }
+
   };
 
   return {
