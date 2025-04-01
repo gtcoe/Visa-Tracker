@@ -212,7 +212,7 @@ const emailService = () => {
     if (request.type === constants.EMAIL_TYPE.DOCUMENT_CHECKLIST) {
       const clientinfo = await clientRepository.getClientByEmail(request.emails);
       if (!(clientinfo.data && clientinfo.data.length == request.emails.length)) {
-        logger.error(`invalid_email_passed`, request);
+        logger.error(`invalid_email_passed`, request, clientinfo);
         throw new Error('invalid_email_passed');
       }
       let clientData: Record<string, any> = {};
