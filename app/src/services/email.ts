@@ -115,7 +115,7 @@ const emailService = () => {
               
               <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #1e4c94; margin: 20px 0;">
                 <h3 style="margin-top: 0; color: #1e4c94;">Attachment:</h3>
-                <p>${data?.country || '{COUNTRY}'}_${data?.category || '{CATEGORY}'}_Visa_Checklist_${data?.nationality || '{NATIONALITY}'}'}.pdf</p>
+                <p><a href="${data?.pdfCdnUrl}" style="color: #1e4c94; text-decoration: underline; font-weight: 500;">${data?.country || '{COUNTRY}'}_${data?.category || '{CATEGORY}'}_Visa_Checklist_${data?.nationality || '{NATIONALITY}'}.pdf</a></p>
               </div>
               
               <p>Should you require any clarification regarding the documentation requirements or need assistance with your application, our visa specialists are available at support@visaistic.com or +9999999999 during regular business hours.</p>
@@ -242,6 +242,7 @@ const emailService = () => {
               category: VISA_CATEGORY_LABELS[request.data?.visaCategory as VISA_CATEGORY] || 'Unknown Category',
               nationality: NATIONALITY_LABELS[request.data?.nationality as NATIONALITY] || 'Unknown Nationality',
               currentDate: new Date().toISOString().split('T')[0],
+              pdfCdnUrl: request.data?.pdfCdnUrl || 'https://cdn.dotpe.in/longtail/custom_website/4430/JIYausSR.pdf'
             };
           }
           logger.info(`recipientData: ${generateError(recipientData)}`);
