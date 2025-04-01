@@ -162,9 +162,9 @@ const emailService = () => {
         
         // Get email content with recipient-specific data
         const { subject, html } = getEmailContent(request.type, recipientData);
-        logger.info(`subject`, subject);
-        logger.info(`html`, html);
-        logger.info(`recipientData2`, recipientData);
+        logger.info(`subject: ${generateError(subject)}`);
+        logger.info(`html: ${generateError(html)}`);
+        logger.info(`recipientData2: ${generateError(recipientData)}`);
 
         // Define email options
         const mailOptions = {
@@ -178,14 +178,14 @@ const emailService = () => {
         const info = await transporter.sendMail(mailOptions);
         
         if (info) {
-          logger.info(`email_sent_successfully_to_${email}`, info);
+          logger.info(`email_sent_successfully_to_${email}: ${generateError(info)}`);
           results.push({
             email,
             messageId: info.messageId,
             status: 'sent'
           });
         } else {
-          logger.info(`email_sent_unsuccessfully_to_${email}`, info);
+          logger.info(`email_sent_unsuccessfully_to_${email}: ${generateError(info)}`);
           results.push({
             email,
             status: 'failed'
@@ -229,8 +229,8 @@ const emailService = () => {
           // Get client information from database
           const clientInfo = await clientRepository.getClientByEmail([request.emails[0]]);
           
-          if (!(clientInfo.data && clientInfo.data.length > 0)) {
-            logger.error(`invalid_email_passed`, request, clientInfo);
+          if (!(clientInfo.data && clientInfo.data.length === request.emails.length)) {
+            logger.error(`invalid_email_passed: ${generateError(request)}`);
             throw new Error('invalid_email_passed');
           }
           
@@ -238,13 +238,13 @@ const emailService = () => {
           for (const client of clientInfo.data) {
             recipientData[client.owner_email] = {
               recipientName: client.name,
-              country: COUNTRY_DISPLAY_NAME[request.data?.country as COUNTRY] || 'Unknown Country',
-              category: VISA_CATEGORY_LABELS[request.data?.category as VISA_CATEGORY] || 'Unknown Category',
+              country: COUNTRY_DISPLAY_NAME[request.data?.visaCountry as COUNTRY] || 'Unknown Country',
+              category: VISA_CATEGORY_LABELS[request.data?.visaCategory as VISA_CATEGORY] || 'Unknown Category',
               nationality: NATIONALITY_LABELS[request.data?.nationality as NATIONALITY] || 'Unknown Nationality',
               currentDate: new Date().toISOString().split('T')[0],
             };
           }
-          logger.info(`recipientData`, recipientData);
+          logger.info(`recipientData: ${generateError(recipientData)}`);
           break;
           
         case constants.EMAIL_TYPE.CREDENTIALS:

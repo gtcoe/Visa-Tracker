@@ -118,7 +118,7 @@ const clientRepository = () => {
         param += `'${email}',`;
       }
       param = param.slice(0, -1);
-      const query = `SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by FROM ${constants.TABLES.CLIENT} WHERE owner_email in (${param}) ORDER BY id DESC`;
+      const query = `SELECT id, name, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by FROM ${constants.TABLES.CLIENT} WHERE owner_email in (${param}) ORDER BY id DESC`;
 
       return await Mysql.query<ClientData[]>(query, []);
     } catch (e) {
