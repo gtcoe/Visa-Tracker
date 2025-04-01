@@ -162,7 +162,10 @@ const emailService = () => {
         
         // Get email content with recipient-specific data
         const { subject, html } = getEmailContent(request.type, recipientData);
-        
+        logger.info(`subject`, subject);
+        logger.info(`html`, html);
+        logger.info(`recipientData2`, recipientData);
+
         // Define email options
         const mailOptions = {
           from: process.env.SMTP_FROM || 'Visa Tracker <garvittyagicoe@gmail.com>',
@@ -241,6 +244,7 @@ const emailService = () => {
               currentDate: new Date().toISOString().split('T')[0],
             };
           }
+          logger.info(`recipientData`, recipientData);
           break;
           
         case constants.EMAIL_TYPE.CREDENTIALS:
