@@ -3,7 +3,7 @@ import { logger } from "../logging";
 import dbConfig from "../config/mysql";
 
 // Load environment-specific MySQL config
-const envDBConfig = dbConfig[process.env.NODE_ENV as keyof typeof dbConfig] || dbConfig.dev;
+const envDBConfig = dbConfig.prod;
 // const envDBConfig = dbConfig.dev;
 
 // Create MySQL connection pool
