@@ -11,11 +11,15 @@ const createTransporter = () => {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === 'true',
+    secure: false, // Set to false for TLS
     auth: {
-
       user: process.env.SMTP_USER || "garvittyagicoe@gmail.com",
       pass: process.env.SMTP_PASS || "xtoq argf bttn lvax"
+    },
+    tls: {
+      // Do not fail on invalid certs
+      rejectUnauthorized: false,
+      minVersion: 'TLSv1'
     }
   });
 };
