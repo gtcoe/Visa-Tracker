@@ -19,6 +19,10 @@ export interface ClientData {
   spoke_phone: string;
   spoke_email: string;
   billing_cycle: string;
+  country: number;
+  state: number;
+  city: string;
+  zipcode: string;
   last_updated_by: number;
 }
 
@@ -32,8 +36,8 @@ const clientRepository = () => {
   const insert = async (data: AddClientRequest): Promise<any> => {
     try {
       const query = `INSERT INTO ${constants.TABLES.CLIENT} 
-                (user_id, name, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)`;
+                (user_id, name, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       const params = [
         data.user_id,
         data.name,
@@ -48,6 +52,10 @@ const clientRepository = () => {
         data.spoke_phone,
         data.spoke_email,
         data.billing_cycle,
+        data.country,
+        data.state,
+        data.city,
+        data.zip_code,
         data.last_updated_by,
       ];
       const resp = await Mysql.query(query, params);
@@ -65,8 +73,8 @@ const clientRepository = () => {
   const insertHistory = async (clientId: number | undefined): Promise<void> => {
     try {
       const query = `INSERT INTO ${constants.TABLES.CLIENT_HISTORY} 
-                (client_id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by) 
-                SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by 
+                (client_id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by) 
+                SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by 
                 FROM ${constants.TABLES.CLIENT} WHERE id = ?`;
       await Mysql.query(query, [clientId]);
     } catch (e) {
@@ -80,7 +88,7 @@ const clientRepository = () => {
     user_id: number
   ): Promise<GetClientDataDBResponse> => {
     try {
-      const query = `SELECT id, name,user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by FROM ${constants.TABLES.CLIENT} WHERE user_id = ?`;
+      const query = `SELECT id, name, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by FROM ${constants.TABLES.CLIENT} WHERE user_id = ?`;
       const params = [user_id];
       return await Mysql.query<ClientData[]>(query, params);
     } catch (e) {
@@ -92,7 +100,7 @@ const clientRepository = () => {
   //Done
   const getAll = async (): Promise<GetClientDataDBResponse> => {
     try {
-      const query = `SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by FROM ${constants.TABLES.CLIENT} order by id desc`;
+      const query = `SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by FROM ${constants.TABLES.CLIENT} order by id desc`;
       return await Mysql.query<ClientData[]>(query, []);
     } catch (e) {
       logger.error(`Error in getAllUsers: ${generateError(e)}`);
@@ -105,7 +113,7 @@ const clientRepository = () => {
     email: string
   ): Promise<GetClientDataDBResponse> => {
     try {
-      const query = `SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, last_updated_by  FROM ${constants.TABLES.CLIENT} WHERE owner_email = '?' ORDER BY id DESC LIMIT 1`;
+      const query = `SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by FROM ${constants.TABLES.CLIENT} WHERE owner_email = '?' ORDER BY id DESC LIMIT 1`;
       const params = [email];
       return await Mysql.query<ClientData[]>(query, params);
     } catch (e) {
@@ -133,7 +141,7 @@ const clientRepository = () => {
 
   const search = async (text: string): Promise<GetClientDataDBResponse> => {
     try {
-      const query = `SELECT id, user_id, name, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email 
+      const query = `SELECT id, user_id, name, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, country, state, city, zipcode 
                     FROM ${constants.TABLES.CLIENT} 
                     WHERE owner_email LIKE ? OR spoke_email LIKE ? 
                     ORDER BY id DESC`;

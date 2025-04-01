@@ -13,6 +13,7 @@ import UserRepository, {
 } from "../repositories/user";
 import { AddClientRequest } from "../models/Client/addClientRequest";
 import { AddUserRequest } from "../models/User/addUserRequest";
+import emailService from "./email";
 
 const clientService = () => {
   const clientRepository = ClientRepository();
@@ -91,6 +92,19 @@ const clientService = () => {
       if (!resp.status) {
         throw new Error("Unable to create client");
       }
+
+      // Send credentials email to client
+      const emailSvc = emailService();
+      emailSvc.sendEmail({
+        type: constants.EMAIL_TYPE.CREDENTIALS,
+        data: {
+          fullName: request.full_name,
+          email: request.owner_email,
+          password: password,
+          URL: constants.LOGIN_URL
+        },
+        emails: [request.owner_email]
+      });
 
       response.setStatus(true);
       response.setMessage("Client created successfully.");
