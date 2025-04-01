@@ -160,19 +160,19 @@ const clientService = () => {
 
   /**
    * Get client by client_user_id
-   * @param clientUserId The user ID of the client to retrieve
+   * @param clientId The user ID of the client to retrieve
    * @returns Client data with the specified client_user_id
    */
-  const getClientByUserId = async (clientUserId: number): Promise<Response> => {
+  const getClientById = async (clientId: number): Promise<Response> => {
     const response = new Response(false);
     try {
-      if (!clientUserId) {
+      if (!clientId) {
         response.setStatusCode(400);
         response.setMessage("Client User ID is required.");
         return response;
       }
 
-      const clientResponse: GetClientDataDBResponse = await clientRepository.getByClientUserId(clientUserId);
+      const clientResponse: GetClientDataDBResponse = await clientRepository.getByClientId(clientId);
 
       // Error Fetching client info
       if (!clientResponse || !clientResponse.status) {
@@ -189,7 +189,7 @@ const clientService = () => {
       response.setData("client_info", clientResponse.data[0]);
       return response;
     } catch (e) {
-      logger.error(`error in clientService.getClientByUserId - ${generateError(e)}`);
+      logger.error(`error in clientService.getByClientId - ${generateError(e)}`);
       throw e;
     }
   };
@@ -199,7 +199,7 @@ const clientService = () => {
     create,
     getClientsByType,
     search,
-    getClientByUserId
+    getClientById
   };
 };
 
