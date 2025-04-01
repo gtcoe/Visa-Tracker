@@ -41,7 +41,7 @@ class Mysql {
     params: any[] = []
   ): Promise<{ status: boolean; data: T | null }> {
     // Log the SQL query and parameters
-    logger.info(`SQL Query: ${sql}`, { params });
+    logger.info(`SQL Query: ${sql}, { params }: ${ params }`);
     
     return new Promise((resolve, reject) => {
       this.pool.query(sql, params, (err: any, results: any) => {
