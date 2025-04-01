@@ -40,6 +40,9 @@ class Mysql {
     sql: string,
     params: any[] = []
   ): Promise<{ status: boolean; data: T | null }> {
+    // Log the SQL query and parameters
+    logger.info(`SQL Query: ${sql}`, { params });
+    
     return new Promise((resolve, reject) => {
       this.pool.query(sql, params, (err: any, results: any) => {
         if (err) {
@@ -50,6 +53,12 @@ class Mysql {
               throw new Error("Unexpected response from database");
             }
           }
+          // Log successful query results (limited to prevent excessive logging)
+          const resultLog = Array.isArray(results) 
+            ? `Results: ${results.length} rows returned` 
+            : `Result: ${JSON.stringify(results).substring(0, 200)}${JSON.stringify(results).length > 200 ? '...' : ''}`;
+          logger.info(`SQL Query Success: ${resultLog}`);
+          
           resolve({ status: true, data: results });
         }
       });
@@ -82,6 +91,9 @@ class Connection extends Mysql {
     sql: string,
     params: any[] = []
   ): Promise<{ status: boolean; data: T | null }> {
+    // Log the SQL query and parameters
+    logger.info(`Transaction SQL Query: ${sql}`, { params });
+    
     return new Promise((resolve, reject) => {
       this.connection.query(sql, params, (err: any, results: any) => {
         if (err) {
@@ -92,6 +104,12 @@ class Connection extends Mysql {
               throw new Error("Unexpected response from database");
             }
           }
+          // Log successful query results (limited to prevent excessive logging)
+          const resultLog = Array.isArray(results) 
+            ? `Results: ${results.length} rows returned` 
+            : `Result: ${JSON.stringify(results).substring(0, 200)}${JSON.stringify(results).length > 200 ? '...' : ''}`;
+          logger.info(`Transaction SQL Query Success: ${resultLog}`);
+          
           resolve({ status: true, data: results });
         }
       });
