@@ -186,7 +186,7 @@ const clientService = () => {
 
       response.setStatus(true);
       response.setMessage("Client retrieved successfully");
-      response.setData("client_info", clientResponse.data[0]);
+      response.setData("client_info", clientResponse.data);
       return response;
     } catch (e) {
       logger.error(`error in clientService.getByClientId - ${generateError(e)}`);
