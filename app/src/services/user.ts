@@ -135,7 +135,7 @@ const userService = () => {
       if (!resp.status) {
         throw new Error("Unable to create user");
       }
-
+      logger.info(`email_send_initiated`);
       const emailSvc = emailService();
       emailSvc.sendEmail({
         type: constants.EMAIL_TYPE.CREDENTIALS,
