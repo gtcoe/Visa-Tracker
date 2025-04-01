@@ -9,14 +9,6 @@ const send: ValidationSchema = {
       minValue: EMAIL_TYPE.WELCOME,
       maxValue: EMAIL_TYPE.DOCUMENT_CHECKLIST,
     },
-    emails: {
-      type: "array",
-      required: true,
-      items: {
-        type: "string",
-        required: true
-      }
-    },
   },
 };
 

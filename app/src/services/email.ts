@@ -14,8 +14,8 @@ const createTransporter = () => {
     secure: process.env.SMTP_SECURE === 'true',
     auth: {
 
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      user: process.env.SMTP_USER || "garvittyagicoe@gmail.com",
+      pass: process.env.SMTP_PASS || "xtoq argf bttn lvax"
     }
   });
 };
@@ -55,7 +55,6 @@ const emailService = () => {
           subject: `Your Visaistic Portal Access Credentials`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-              <h2 style="color: #333;">Subject: Your Visaistic Portal Access Credentials</h2>
               
               <p>Dear ${data?.fullName || 'User'},</p>
               
@@ -100,7 +99,6 @@ const emailService = () => {
           subject: `Visa Document Checklist for ${data?.nationality || '{NATIONALITY}'} Applicants - ${data?.country || '{COUNTRY}'} ${data?.category || '{CATEGORY}'} Visa`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-              <h2 style="color: #333;">Subject: Visa Document Checklist for ${data?.nationality || '{NATIONALITY}'} Applicants - ${data?.country || '{COUNTRY}'} ${data?.category || '{CATEGORY}'} Visa</h2>
               
               <p>Dear ${data?.recipientName || '{Recipient Name}'},</p>
               
