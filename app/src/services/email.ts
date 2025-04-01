@@ -163,13 +163,14 @@ const emailService = () => {
         const info = await transporter.sendMail(mailOptions);
         
         if (info) {
-          logger.info(`Email sent successfully to ${email}. Message ID: ${info.messageId}`);
+          logger.info(`email_sent_successfully_to_${email}`, info);
           results.push({
             email,
             messageId: info.messageId,
             status: 'sent'
           });
         } else {
+          logger.info(`email_sent_unsuccessfully_to_${email}`, info);
           results.push({
             email,
             status: 'failed'
@@ -179,7 +180,7 @@ const emailService = () => {
       
       // Check if any emails were sent successfully
       if (results.length === 0 || results.every(r => r.status === 'failed')) {
-        throw new Error('Failed to send all emails');
+        throw new Error('failed_to_send_all_emails');
       }
       
       response.setStatus(true);
