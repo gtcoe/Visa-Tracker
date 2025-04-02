@@ -320,45 +320,135 @@ const applicationService = () => {
 
   const verifyPassengerChange = async (savedPassengerinfo: RepoPassengerData, newPassengerinfo: PersonalInfo, newPassportInfo: PassportInfo, newAddressInfo: AddressInfo) => {
     try {
-    // Check if there are any changes in passenger details
-    const isPersonalInfoSame = 
-      savedPassengerinfo.first_name === newPassengerinfo.first_name &&
-      savedPassengerinfo.last_name === newPassengerinfo.last_name &&
-      savedPassengerinfo.email === newPassengerinfo.email_id &&
-      savedPassengerinfo.dob === newPassengerinfo.date_of_birth &&
-      savedPassengerinfo.processing_branch === newPassengerinfo.processing_branch;
+      logger.info(`savedPassengerinfo - ${generateError({savedPassengerinfo})}`);
+      logger.info(`newPassengerinfo - ${generateError({newPassengerinfo})}`);
+      logger.info(`newPassportInfo - ${generateError({newPassportInfo})}`);
+      logger.info(`newAddressInfo - ${generateError({newAddressInfo})}`);
+
+      // Check personal info fields
+      const isFirstNameSame = savedPassengerinfo.first_name === newPassengerinfo.first_name;
+      logger.info(`First name comparison - ${generateError({savedFirstName: savedPassengerinfo.first_name, newFirstName: newPassengerinfo.first_name, isMatching: isFirstNameSame})}`);
+      
+      const isLastNameSame = savedPassengerinfo.last_name === newPassengerinfo.last_name;
+      logger.info(`Last name comparison - ${generateError({savedLastName: savedPassengerinfo.last_name, newLastName: newPassengerinfo.last_name, isMatching: isLastNameSame})}`);
+      
+      const isEmailSame = savedPassengerinfo.email === newPassengerinfo.email_id;
+      logger.info(`Email comparison - ${generateError({savedEmail: savedPassengerinfo.email, newEmail: newPassengerinfo.email_id, isMatching: isEmailSame})}`);
+      
+      const isDobSame = savedPassengerinfo.dob === newPassengerinfo.date_of_birth;
+      logger.info(`DOB comparison - ${generateError({savedDob: savedPassengerinfo.dob, newDob: newPassengerinfo.date_of_birth, isMatching: isDobSame})}`);
+      
+      const isProcessingBranchSame = savedPassengerinfo.processing_branch === newPassengerinfo.processing_branch;
+      logger.info(`Processing branch comparison - ${generateError({savedBranch: savedPassengerinfo.processing_branch, newBranch: newPassengerinfo.processing_branch, isMatching: isProcessingBranchSame})}`);
+      
+      const isPersonalInfoSame = 
+        isFirstNameSame &&
+        isLastNameSame &&
+        isEmailSame &&
+        isDobSame &&
+        isProcessingBranchSame;
+      logger.info(`Overall personal info comparison - ${generateError({isPersonalInfoSame})}`);
+      
+      // Check passport info fields
+      const isPassportNumberSame = savedPassengerinfo.passport_number === newPassportInfo.passport_number;
+      logger.info(`Passport number comparison - ${generateError({savedPassportNumber: savedPassengerinfo.passport_number, newPassportNumber: newPassportInfo.passport_number, isMatching: isPassportNumberSame})}`);
+      
+      const isDateOfIssueSame = savedPassengerinfo.passport_date_of_issue === newPassportInfo.date_of_issue;
+      logger.info(`Passport date of issue comparison - ${generateError({savedDateOfIssue: savedPassengerinfo.passport_date_of_issue, newDateOfIssue: newPassportInfo.date_of_issue, isMatching: isDateOfIssueSame})}`);
+      
+      const isDateOfExpirySame = savedPassengerinfo.passport_date_of_expiry === newPassportInfo.date_of_expiry;
+      logger.info(`Passport date of expiry comparison - ${generateError({savedDateOfExpiry: savedPassengerinfo.passport_date_of_expiry, newDateOfExpiry: newPassportInfo.date_of_expiry, isMatching: isDateOfExpirySame})}`);
+      
+      const isIssueAtSame = savedPassengerinfo.passport_issue_at === newPassportInfo.issue_at;
+      logger.info(`Passport issue at comparison - ${generateError({savedIssueAt: savedPassengerinfo.passport_issue_at, newIssueAt: newPassportInfo.issue_at, isMatching: isIssueAtSame})}`);
+      
+      const isExpiredPassportCountSame = String(savedPassengerinfo.count_of_expired_passport) === String(newPassportInfo.no_of_expired_passport);
+      logger.info(`Expired passport count comparison - ${generateError({savedCount: savedPassengerinfo.count_of_expired_passport, newCount: newPassportInfo.no_of_expired_passport, isMatching: isExpiredPassportCountSame})}`);
+      
+      const isExpiredPassportNumberSame = savedPassengerinfo.expired_passport_number === newPassportInfo.expired_passport_number;
+      logger.info(`Expired passport number comparison - ${generateError({savedExpiredNumber: savedPassengerinfo.expired_passport_number, newExpiredNumber: newPassportInfo.expired_passport_number, isMatching: isExpiredPassportNumberSame})}`);
+      
+      const isPassportInfoSame =
+        isPassportNumberSame &&
+        isDateOfIssueSame &&
+        isDateOfExpirySame &&
+        isIssueAtSame &&
+        isExpiredPassportCountSame &&
+        isExpiredPassportNumberSame;
+      logger.info(`Overall passport info comparison - ${generateError({isPassportInfoSame})}`);
+      
+      // Check address info fields
+      const isAddressLine1Same = savedPassengerinfo.address_line_1 === newAddressInfo.address_line1;
+      logger.info(`Address line 1 comparison - ${generateError({savedAddressLine1: savedPassengerinfo.address_line_1, newAddressLine1: newAddressInfo.address_line1, isMatching: isAddressLine1Same})}`);
+      
+      const isAddressLine2Same = (savedPassengerinfo.address_line_2 || '') === (newAddressInfo.address_line2 || '');
+      logger.info(`Address line 2 comparison - ${generateError({savedAddressLine2: savedPassengerinfo.address_line_2 || '', newAddressLine2: newAddressInfo.address_line2 || '', isMatching: isAddressLine2Same})}`);
+      
+      const isCountrySame = String(savedPassengerinfo.country) === String(newAddressInfo.country);
+      logger.info(`Country comparison - ${generateError({savedCountry: savedPassengerinfo.country, newCountry: newAddressInfo.country, isMatching: isCountrySame})}`);
+      
+      const isStateSame = String(savedPassengerinfo.state) === String(newAddressInfo.state);
+      logger.info(`State comparison - ${generateError({savedState: savedPassengerinfo.state, newState: newAddressInfo.state, isMatching: isStateSame})}`);
+      
+      const isCitySame = String(savedPassengerinfo.city) === String(newAddressInfo.city);
+      logger.info(`City comparison - ${generateError({savedCity: savedPassengerinfo.city, newCity: newAddressInfo.city, isMatching: isCitySame})}`);
+      
+      const isZipSame = savedPassengerinfo.zip === newAddressInfo.zip;
+      logger.info(`Zip comparison - ${generateError({savedZip: savedPassengerinfo.zip, newZip: newAddressInfo.zip, isMatching: isZipSame})}`);
+      
+      const isOccupationSame = savedPassengerinfo.occupation === newAddressInfo.occupation;
+      logger.info(`Occupation comparison - ${generateError({savedOccupation: savedPassengerinfo.occupation, newOccupation: newAddressInfo.occupation, isMatching: isOccupationSame})}`);
+      
+      const isPositionSame = savedPassengerinfo.position === newAddressInfo.position;
+      logger.info(`Position comparison - ${generateError({savedPosition: savedPassengerinfo.position, newPosition: newAddressInfo.position, isMatching: isPositionSame})}`);
+      
+      const isAddressInfoSame =
+        isAddressLine1Same &&
+        isAddressLine2Same &&
+        isCountrySame &&
+        isStateSame &&
+        isCitySame &&
+        isZipSame &&
+        isOccupationSame &&
+        isPositionSame;
+      logger.info(`Overall address info comparison - ${generateError({isAddressInfoSame})}`);
     
-    const isPassportInfoSame =
-      savedPassengerinfo.passport_number === newPassportInfo.passport_number &&
-      savedPassengerinfo.passport_date_of_issue === newPassportInfo.date_of_issue &&
-      savedPassengerinfo.passport_date_of_expiry === newPassportInfo.date_of_expiry &&
-      savedPassengerinfo.passport_issue_at === newPassportInfo.issue_at &&
-      String(savedPassengerinfo.count_of_expired_passport) === String(newPassportInfo.no_of_expired_passport) &&
-      savedPassengerinfo.expired_passport_number === newPassportInfo.expired_passport_number;
+      const isAllInfoSame = isPersonalInfoSame && isPassportInfoSame && isAddressInfoSame;
+      logger.info(`Overall passenger change verification - ${generateError({isAllInfoSame})}`);
     
-    const isAddressInfoSame =
-      savedPassengerinfo.address_line_1 === newAddressInfo.address_line1 &&
-      (savedPassengerinfo.address_line_2 || '') === (newAddressInfo.address_line2 || '') &&
-      String(savedPassengerinfo.country) === String(newAddressInfo.country) &&
-      String(savedPassengerinfo.state) === String(newAddressInfo.state) &&
-      String(savedPassengerinfo.city) === String(newAddressInfo.city) &&
-      savedPassengerinfo.zip === newAddressInfo.zip &&
-      savedPassengerinfo.occupation === newAddressInfo.occupation &&
-      savedPassengerinfo.position === newAddressInfo.position;
-    
-    // If all information is the same, we can continue with the existing passenger
-    // If any information has changed, we need to create a new passenger and update mapping
-    const isAllInfoSame = isPersonalInfoSame && isPassportInfoSame && isAddressInfoSame;
-    
-    return {
-      isChanged: !isAllInfoSame,
-      // If we need detailed info on what's changed later:
-      details: {
-        isPersonalInfoSame,
-        isPassportInfoSame,
-        isAddressInfoSame
-      }
-    };
+      return {
+        isChanged: !isAllInfoSame,
+        details: {
+          isPersonalInfoSame,
+          isPassportInfoSame,
+          isAddressInfoSame,
+          personalInfoDetails: {
+            isFirstNameSame,
+            isLastNameSame,
+            isEmailSame,
+            isDobSame,
+            isProcessingBranchSame
+          },
+          passportInfoDetails: {
+            isPassportNumberSame,
+            isDateOfIssueSame,
+            isDateOfExpirySame,
+            isIssueAtSame,
+            isExpiredPassportCountSame,
+            isExpiredPassportNumberSame
+          },
+          addressInfoDetails: {
+            isAddressLine1Same,
+            isAddressLine2Same,
+            isCountrySame,
+            isStateSame,
+            isCitySame,
+            isZipSame,
+            isOccupationSame,
+            isPositionSame
+          }
+        }
+      };
     } catch (e) {
       logger.error(`error in applicationService.verifyPassengerChange - ${generateError(e)}`);
       throw e;
