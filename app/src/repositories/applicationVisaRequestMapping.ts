@@ -2,7 +2,7 @@ import MySql from "../database/mySql";
 import Response from "../models/response";
 import { logger } from "../logging";
 import { generateError } from "../services/util";
-import constants from "@/config/constants/constants";
+import constants from "../config/constants/constants";
 
 export interface ApplicationVisaRequestMappingData {
   id?: number;
