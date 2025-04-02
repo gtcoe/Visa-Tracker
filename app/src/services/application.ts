@@ -384,36 +384,46 @@ const applicationService = () => {
         is_sub_request
       } = request;
       
+      logger.info(`addStep3Data started - ${generateError({is_sub_request, application_id, reference_number})}`);
+      
       // Determine if this is a new sub-request or an update to existing application
       if (!is_sub_request) {
         // CASE 1: Update existing application
+        logger.info(`Case 1: Update existing application - ${generateError({application_id})}`);
+        
         // Fetch the complete application data (including passenger info and visa requests)
-      const applicationWithPassengerResult = await applicationRepository.getApplicationWithPassenger(
+        const applicationWithPassengerResult = await applicationRepository.getApplicationWithPassenger(
           application_id
-      );
+        );
+        logger.info(`getApplicationWithPassenger result - ${generateError(applicationWithPassengerResult)}`);
       
-      if (!applicationWithPassengerResult.status || !applicationWithPassengerResult.data || applicationWithPassengerResult.data.length === 0) {
-        response.message = `Application with ID ${application_id} not found`;
-        return response;
-      }
+        if (!applicationWithPassengerResult.status || !applicationWithPassengerResult.data || applicationWithPassengerResult.data.length === 0) {
+          response.message = `Application with ID ${application_id} not found`;
+          return response;
+        }
 
         const applicationData = applicationWithPassengerResult.data[0] as any; // Using 'any' type to handle joined data
         let passengerId: number;
         
         // Check if passenger already exists and if data has changed
         if (applicationData.passenger_id) {
+          logger.info(`Passenger exists - ${generateError({passenger_id: applicationData.passenger_id})}`);
+          
           // Create passenger info object from application data
           const passengerInfo: RepoPassengerData = createPassengerInfoFromApplicationData(applicationData);
+          logger.info(`Created passenger info from application data - ${generateError({passengerInfo})}`);
           
           // Verify if passenger details have changed
           const verifyResult = await verifyPassengerChange(
             passengerInfo,
-        personal_info,
-        passport_info,
+            personal_info,
+            passport_info,
             address_info
           );
+          logger.info(`Passenger change verification result - ${generateError({verifyResult})}`);
 
           if (verifyResult.isChanged) {
+            logger.info(`Passenger details have changed - creating new passenger`);
             // Create new passenger with updated details
             const passengerData: any = {
               first_name: personal_info.first_name,
@@ -440,6 +450,8 @@ const applicationService = () => {
             };
             
             const passengerResult = await passengerRepository.insertPassenger(passengerData);
+            logger.info(`insertPassenger result - ${generateError({passengerResult})}`);
+            
             if (!passengerResult.status) {
               throw new Error("Failed to create passenger");
             }
@@ -449,25 +461,29 @@ const applicationService = () => {
             // Remove old passenger mapping (by updating status) and create new mapping
             if (applicationData.id) {
               // Update status of old mapping to inactive
-              await applicationPassengerRepository.updateStatus(
+              const updateStatusResult = await applicationPassengerRepository.updateStatus(
                 constants.STATUS.APPLICATION_PASSENGER_MAPPING.INACTIVE,
                 applicationData.passenger_id,
                 applicationData.id,
                 token_user_id || 0
               );
+              logger.info(`updateStatus result - ${generateError({updateStatusResult})}`);
               
               // Create new mapping between application and new passenger
-              await applicationPassengerRepository.createMapping(
+              const createMappingResult = await applicationPassengerRepository.createMapping(
                 applicationData.id,
                 passengerId,
                 token_user_id || 0
               );
+              logger.info(`createMapping result - ${generateError({createMappingResult})}`);
             }
           } else {
+            logger.info(`Passenger details unchanged - using existing passenger`);
             // Use existing passenger
             passengerId = applicationData.passenger_id;
           }
         } else {
+          logger.info(`No existing passenger - creating new passenger`);
           // Create new passenger when none exists
           const passengerData: any = {
             first_name: personal_info.first_name,
@@ -494,6 +510,8 @@ const applicationService = () => {
           };
           
           const passengerResult = await passengerRepository.insertPassenger(passengerData);
+          logger.info(`insertPassenger result - ${generateError({passengerResult})}`);
+          
           if (!passengerResult.status) {
             throw new Error("Failed to create passenger");
           }
@@ -502,21 +520,27 @@ const applicationService = () => {
           
           // Create mapping between application and new passenger
           if (applicationData.id) {
-            await applicationPassengerRepository.createMapping(
+            const createMappingResult = await applicationPassengerRepository.createMapping(
               applicationData.id,
               passengerId,
               token_user_id || 0
             );
+            logger.info(`createMapping result - ${generateError({createMappingResult})}`);
           }
         }
         
         // Get existing visa requests for the application
         let existingVisaRequests: any[] = [];
         const existingMappings = await applicationVisaRequestMappingRepository.getByApplicationId(application_id);
+        logger.info(`getByApplicationId result - ${generateError({existingMappings})}`);
         
         if (existingMappings.status && existingMappings.data && existingMappings.data.length > 0) {
           const existingVisaRequestIds = existingMappings.data.map(mapping => mapping.visa_request_id);
+          logger.info(`Extracted visa request IDs - ${generateError({existingVisaRequestIds})}`);
+          
           const visaRequestsResponse = await visaRequestRepository.getByIds(existingVisaRequestIds);
+          logger.info(`getByIds result - ${generateError({visaRequestsResponse})}`);
+          
           if (visaRequestsResponse.status && visaRequestsResponse.data) {
             existingVisaRequests = visaRequestsResponse.data;
           }
@@ -524,6 +548,8 @@ const applicationService = () => {
         
         // Process visa requests - compare and only create those that don't exist
         if (visa_requests && visa_requests.length > 0) {
+          logger.info(`Processing ${visa_requests.length} visa requests`);
+          
           // Create a map of existing visa requests for easy lookup
           const existingVisaRequestMap = new Map();
           existingVisaRequests.forEach(request => {
@@ -534,6 +560,7 @@ const applicationService = () => {
               mappingId: existingMappings.data?.find(m => m.visa_request_id === request.id)?.id
             });
           });
+          logger.info(`Created lookup map of existing visa requests - ${generateError({mapSize: existingVisaRequestMap.size})}`);
           
           // Identify which existing mappings to keep and which new visa requests to create
           const mappingsToKeep = new Set<number>();
@@ -561,61 +588,76 @@ const applicationService = () => {
               });
             }
           }
+          logger.info(`Identified mappings to keep and new visa requests - ${generateError({mappingsToKeepCount: mappingsToKeep.size, newVisaRequestsCount: newVisaRequestsData.length})}`);
           
           // Mark mappings as inactive if they're not in the keep list
           const mappingsToInactivate = existingMappings.data?.filter(
             mapping => !mappingsToKeep.has(mapping.id!)
           ) || [];
+          logger.info(`Identified mappings to inactivate - ${generateError({mappingsToInactivateCount: mappingsToInactivate.length})}`);
           
           if (mappingsToInactivate.length > 0) {
             // Update each mapping status to inactive one by one
             for (const mapping of mappingsToInactivate) {
               if (mapping.id) {
-                await applicationVisaRequestMappingRepository.createMapping(
+                const inactivateMappingResult = await applicationVisaRequestMappingRepository.createMapping(
                   mapping.application_id,
                   mapping.visa_request_id,
-        token_user_id || 0,
+                  token_user_id || 0,
                   // TODO: Add proper API for updating mapping status
                   // For now, we'll create new mappings and handle inactive status separately
                 );
+                logger.info(`Inactivate mapping result - ${generateError({inactivateMappingResult, mappingId: mapping.id})}`);
               }
             }
           }
           
           // Batch insert new visa requests
           if (newVisaRequestsData.length > 0) {
+            logger.info(`Starting batch insert of ${newVisaRequestsData.length} new visa requests`);
+            
             // Create a connection for batch operations
             const connection = await MySql.getConnection();
+            logger.info(`Got MySQL connection for batch operations`);
+            
             try {
               const visaResult = await visaRequestRepository.batchInsert(newVisaRequestsData);
+              logger.info(`Batch insert visa requests result - ${generateError({visaResult})}`);
+              
               if (!visaResult.status || !visaResult.data) {
                 throw new Error("Failed to insert visa requests");
               }
               
               // Get the inserted visa request IDs
               const newVisaRequestIds = visaResult.data.insertIds || [];
+              logger.info(`New visa request IDs - ${generateError({newVisaRequestIds})}`);
               
               // Create mappings for new visa requests
               if (newVisaRequestIds.length > 0) {
                 for (const visaId of newVisaRequestIds) {
-                  await applicationVisaRequestMappingRepository.createMapping(
-        application_id,
+                  const createMappingResult = await applicationVisaRequestMappingRepository.createMapping(
+                    application_id,
                     visaId,
                     token_user_id || 0,
-      );
+                  );
+                  logger.info(`Create mapping result for new visa ID ${visaId} - ${generateError({createMappingResult})}`);
                 }
               }
             } finally {
               connection.release();
+              logger.info(`Released MySQL connection after batch operations`);
             }
           }
         } else if (existingMappings.data && existingMappings.data.length > 0) {
+          logger.info(`No visa requests provided, handling existing mappings - ${generateError({existingMappingsCount: existingMappings.data.length})}`);
+          
           // No visa requests provided, mark all existing mappings as inactive
           // Similar to above, we need to handle this case through individual updates
           for (const mapping of existingMappings.data) {
             if (mapping.id) {
               // TODO: Add proper API for updating mapping status
               // For now, we'll handle this through existing APIs
+              logger.info(`Should inactivate mapping - ${generateError({mappingId: mapping.id})}`);
             }
           }
         }
@@ -633,8 +675,11 @@ const applicationService = () => {
           queue: APPLICATION_QUEUES.IN_TRANSIT,
           status: constants.STATUS.APPLICATION.STEP3_DONE
         };
+        logger.info(`Updating application with step 3 data - ${generateError({applicationUpdateData})}`);
         
         const updateResult = await applicationRepository.updateStep3Data(applicationUpdateData);
+        logger.info(`Update application step 3 data result - ${generateError({updateResult})}`);
+        
         if (!updateResult.status) {
           throw new Error("Failed to update application");
         }
@@ -643,6 +688,8 @@ const applicationService = () => {
         let clientName = "";
         if (applicationData.client_user_id) {
           const clientData = await clientRepository.getByUserId(applicationData.client_user_id);
+          logger.info(`Get client data result - ${generateError({clientData})}`);
+          
           if (clientData.status && clientData.data) {
             clientName = clientData.data[0].name;
           }
@@ -657,9 +704,12 @@ const applicationService = () => {
             client_user_id: applicationData.client_user_id,
           }
         };
+        logger.info(`Case 1 completed successfully - ${generateError({responseStatus: response.status, responseMessage: response.message})}`);
         
       } else {
         // CASE 2: Create new application as a sub-request
+        logger.info(`Case 2: Create new application as a sub-request - ${generateError({reference_number})}`);
+        
         // Fetch application data using reference number
         if (!reference_number) {
           response.message = "Reference number is required for sub-requests";
@@ -667,6 +717,7 @@ const applicationService = () => {
         }
         
         const existingApplicationResult = await applicationRepository.getByReferenceNumber(reference_number);
+        logger.info(`getByReferenceNumber result - ${generateError({existingApplicationResult})}`);
         
         if (!existingApplicationResult.status || !existingApplicationResult.data || existingApplicationResult.data.length === 0) {
           response.message = `Invalid reference number: ${reference_number}`;
@@ -689,8 +740,11 @@ const applicationService = () => {
           reference_number: reference_number,
           status: constants.STATUS.APPLICATION.STEP1_DONE
         };
+        logger.info(`Creating new application with step 1 data - ${generateError({newApplicationData})}`);
         
         const newAppResult = await applicationRepository.insertAddStep1Data(newApplicationData);
+        logger.info(`Insert new application result - ${generateError({newAppResult})}`);
+        
         if (!newAppResult.status) {
           throw new Error("Failed to create new application as sub-request");
         }
@@ -721,8 +775,11 @@ const applicationService = () => {
           last_updated_by: token_user_id || 0,
           status: constants.STATUS.PASSENGER.ACTIVE
         };
+        logger.info(`Creating new passenger for sub-request - ${generateError({passengerData})}`);
         
         const passengerResult = await passengerRepository.insertPassenger(passengerData);
+        logger.info(`Insert passenger result - ${generateError({passengerResult})}`);
+        
         if (!passengerResult.status) {
           throw new Error("Failed to create passenger for sub-request");
         }
@@ -730,17 +787,21 @@ const applicationService = () => {
         const passengerId = passengerResult.data.insertId;
         
         // Create mapping between new application and passenger
-        await applicationPassengerRepository.createMapping(
+        const mappingResult = await applicationPassengerRepository.createMapping(
           newApplicationId,
           passengerId,
           token_user_id || 0
         );
+        logger.info(`Create passenger mapping result - ${generateError({mappingResult})}`);
         
         // Create visa requests and batch create mappings
         const visaRequestIds: number[] = [];
         
         if (visa_requests && visa_requests.length > 0) {
+          logger.info(`Processing ${visa_requests.length} visa requests for sub-request`);
+          
           const connection = await MySql.getConnection();
+          logger.info(`Got MySQL connection for visa request operations`);
           
           try {
             // Insert each visa request
@@ -756,6 +817,8 @@ const applicationService = () => {
               };
               
               const visaResult = await visaRequestRepository.insertWithConnection(visaRequestData);
+              logger.info(`Insert visa request result - ${generateError({visaResult, visaRequestData})}`);
+              
               if (!visaResult.status) {
                 throw new Error("Failed to insert visa request for sub-request");
               }
@@ -765,14 +828,16 @@ const applicationService = () => {
             
             // Create mappings for all visa requests
             for (const visaId of visaRequestIds) {
-              await applicationVisaRequestMappingRepository.createMapping(
+              const mappingResult = await applicationVisaRequestMappingRepository.createMapping(
                 newApplicationId,
                 visaId,
-          token_user_id || 0,
-        );
+                token_user_id || 0,
+              );
+              logger.info(`Create visa request mapping result - ${generateError({mappingResult, visaId})}`);
             }
           } finally {
             connection.release();
+            logger.info(`Released MySQL connection after visa request operations`);
           }
         }
         
@@ -789,8 +854,11 @@ const applicationService = () => {
           queue: APPLICATION_QUEUES.IN_TRANSIT,
           status: constants.STATUS.APPLICATION.STEP3_DONE
         };
+        logger.info(`Updating sub-request application with step 3 data - ${generateError({applicationUpdateData})}`);
         
         const updateResult = await applicationRepository.updateStep3Data(applicationUpdateData);
+        logger.info(`Update sub-request application result - ${generateError({updateResult})}`);
+        
         if (!updateResult.status) {
           throw new Error("Failed to update application details for sub-request");
         }
@@ -799,14 +867,16 @@ const applicationService = () => {
         let clientName = "";
         if (existingApplication.client_user_id) {
           const clientData = await clientRepository.getByUserId(existingApplication.client_user_id);
+          logger.info(`Get client data result - ${generateError({clientData})}`);
+          
           if (clientData.status && clientData.data) {
             clientName = clientData.data[0].name;
           }
-      }
+        }
       
-      response.setStatus(true);
+        response.setStatus(true);
         response.message = "Sub-request Application Created Successfully.";
-      response.data = {
+        response.data = {
           application_requests: {
             ...request,
             application_id: newApplicationId,
@@ -814,6 +884,7 @@ const applicationService = () => {
             client_user_id: existingApplication.client_user_id,
           }
         };
+        logger.info(`Case 2 completed successfully - ${generateError({responseStatus: response.status, responseMessage: response.message})}`);
       }
       
       return response;
