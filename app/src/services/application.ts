@@ -335,13 +335,13 @@ const applicationService = () => {
       const isEmailSame = savedPassengerinfo.email === newPassengerinfo.email_id;
       logger.info(`Email comparison - ${generateError({savedEmail: savedPassengerinfo.email, newEmail: newPassengerinfo.email_id, isMatching: isEmailSame})}`);
       
-      const isDobSame = (savedPassengerinfo.dob).substring(0,10) === newPassengerinfo.date_of_birth;
-      logger.info(`DOB comparison - ${generateError({savedDob: (savedPassengerinfo.dob).substring(0,10), newDob: newPassengerinfo.date_of_birth, isMatching: isDobSame})}`);
+      const isDobSame = String(savedPassengerinfo.dob).substring(0,10) === newPassengerinfo.date_of_birth;
+      logger.info(`DOB comparison - ${generateError({savedDob: String(savedPassengerinfo.dob).substring(0,10), newDob: newPassengerinfo.date_of_birth, isMatching: isDobSame})}`);
       
       const isProcessingBranchSame = savedPassengerinfo.processing_branch === newPassengerinfo.processing_branch;
       logger.info(`Processing branch comparison - ${generateError({savedBranch: savedPassengerinfo.processing_branch, newBranch: newPassengerinfo.processing_branch, isMatching: isProcessingBranchSame})}`);
       
-      const isPersonalInfoSame = 
+    const isPersonalInfoSame = 
         isFirstNameSame &&
         isLastNameSame &&
         isEmailSame &&
@@ -353,11 +353,11 @@ const applicationService = () => {
       const isPassportNumberSame = savedPassengerinfo.passport_number === newPassportInfo.passport_number;
       logger.info(`Passport number comparison - ${generateError({savedPassportNumber: savedPassengerinfo.passport_number, newPassportNumber: newPassportInfo.passport_number, isMatching: isPassportNumberSame})}`);
       
-      const isDateOfIssueSame = (savedPassengerinfo.passport_date_of_issue).substring(0,10) === newPassportInfo.date_of_issue;
-      logger.info(`Passport date of issue comparison - ${generateError({savedDateOfIssue: (savedPassengerinfo.passport_date_of_issue).substring(0,10), newDateOfIssue: newPassportInfo.date_of_issue, isMatching: isDateOfIssueSame})}`);
+      const isDateOfIssueSame = String(savedPassengerinfo.passport_date_of_issue).substring(0,10) === newPassportInfo.date_of_issue;
+      logger.info(`Passport date of issue comparison - ${generateError({savedDateOfIssue: String(savedPassengerinfo.passport_date_of_issue).substring(0,10), newDateOfIssue: newPassportInfo.date_of_issue, isMatching: isDateOfIssueSame})}`);
       
-      const isDateOfExpirySame = (savedPassengerinfo.passport_date_of_expiry).substring(0,10) === newPassportInfo.date_of_expiry;
-      logger.info(`Passport date of expiry comparison - ${generateError({savedDateOfExpiry: (savedPassengerinfo.passport_date_of_expiry).substring(0,10), newDateOfExpiry: newPassportInfo.date_of_expiry, isMatching: isDateOfExpirySame})}`);
+      const isDateOfExpirySame = String(savedPassengerinfo.passport_date_of_expiry).substring(0,10) === newPassportInfo.date_of_expiry;
+      logger.info(`Passport date of expiry comparison - ${generateError({savedDateOfExpiry: String(savedPassengerinfo.passport_date_of_expiry).substring(0,10), newDateOfExpiry: newPassportInfo.date_of_expiry, isMatching: isDateOfExpirySame})}`);
       
       const isIssueAtSame = savedPassengerinfo.passport_issue_at === newPassportInfo.issue_at;
       logger.info(`Passport issue at comparison - ${generateError({savedIssueAt: savedPassengerinfo.passport_issue_at, newIssueAt: newPassportInfo.issue_at, isMatching: isIssueAtSame})}`);
@@ -367,8 +367,8 @@ const applicationService = () => {
       
       const isExpiredPassportNumberSame = savedPassengerinfo.expired_passport_number === newPassportInfo.expired_passport_number;
       logger.info(`Expired passport number comparison - ${generateError({savedExpiredNumber: savedPassengerinfo.expired_passport_number, newExpiredNumber: newPassportInfo.expired_passport_number, isMatching: isExpiredPassportNumberSame})}`);
-      
-      const isPassportInfoSame =
+    
+    const isPassportInfoSame =
         isPassportNumberSame &&
         isDateOfIssueSame &&
         isDateOfExpirySame &&
@@ -401,8 +401,8 @@ const applicationService = () => {
       
       const isPositionSame = savedPassengerinfo.position === newAddressInfo.position;
       logger.info(`Position comparison - ${generateError({savedPosition: savedPassengerinfo.position, newPosition: newAddressInfo.position, isMatching: isPositionSame})}`);
-      
-      const isAddressInfoSame =
+    
+    const isAddressInfoSame =
         isAddressLine1Same &&
         isAddressLine2Same &&
         isCountrySame &&
@@ -413,14 +413,14 @@ const applicationService = () => {
         isPositionSame;
       logger.info(`Overall address info comparison - ${generateError({isAddressInfoSame})}`);
     
-      const isAllInfoSame = isPersonalInfoSame && isPassportInfoSame && isAddressInfoSame;
+    const isAllInfoSame = isPersonalInfoSame && isPassportInfoSame && isAddressInfoSame;
       logger.info(`Overall passenger change verification - ${generateError({isAllInfoSame})}`);
     
-      return {
-        isChanged: !isAllInfoSame,
-        details: {
-          isPersonalInfoSame,
-          isPassportInfoSame,
+    return {
+      isChanged: !isAllInfoSame,
+      details: {
+        isPersonalInfoSame,
+        isPassportInfoSame,
           isAddressInfoSame,
           personalInfoDetails: {
             isFirstNameSame,
@@ -482,15 +482,15 @@ const applicationService = () => {
         logger.info(`Case 1: Update existing application - ${generateError({application_id})}`);
         
         // Fetch the complete application data (including passenger info and visa requests)
-        const applicationWithPassengerResult = await applicationRepository.getApplicationWithPassenger(
+      const applicationWithPassengerResult = await applicationRepository.getApplicationWithPassenger(
           application_id
-        );
+      );
         logger.info(`getApplicationWithPassenger result - ${generateError(applicationWithPassengerResult)}`);
       
-        if (!applicationWithPassengerResult.status || !applicationWithPassengerResult.data || applicationWithPassengerResult.data.length === 0) {
-          response.message = `Application with ID ${application_id} not found`;
-          return response;
-        }
+      if (!applicationWithPassengerResult.status || !applicationWithPassengerResult.data || applicationWithPassengerResult.data.length === 0) {
+        response.message = `Application with ID ${application_id} not found`;
+        return response;
+      }
 
         const applicationData = applicationWithPassengerResult.data[0] as any; // Using 'any' type to handle joined data
         let passengerId: number;
@@ -506,8 +506,8 @@ const applicationService = () => {
           // Verify if passenger details have changed
           const verifyResult = await verifyPassengerChange(
             passengerInfo,
-            personal_info,
-            passport_info,
+        personal_info,
+        passport_info,
             address_info
           );
           logger.info(`Passenger change verification result - ${generateError({verifyResult})}`);
@@ -612,7 +612,7 @@ const applicationService = () => {
           if (applicationData.id) {
             const createMappingResult = await applicationPassengerRepository.createMapping(
               applicationData.id,
-              passengerId,
+          passengerId,
               token_user_id || 0
             );
             logger.info(`createMapping result - ${generateError({createMappingResult})}`);
@@ -693,7 +693,7 @@ const applicationService = () => {
                 const inactivateMappingResult = await applicationVisaRequestMappingRepository.createMapping(
                   mapping.application_id,
                   mapping.visa_request_id,
-                  token_user_id || 0,
+          token_user_id || 0,
                   // TODO: Add proper API for updating mapping status
                   // For now, we'll create new mappings and handle inactive status separately
                 );
@@ -783,11 +783,11 @@ const applicationService = () => {
           if (clientData.status && clientData.data) {
             clientName = clientData.data[0].name;
           }
-        }
-        
-        response.setStatus(true);
-        response.message = "Application Updated Successfully.";
-        response.data = {
+      }
+      
+      response.setStatus(true);
+      response.message = "Application Updated Successfully.";
+      response.data = {
           application_requests: {
             ...request,
             client_name: clientName,
@@ -803,7 +803,7 @@ const applicationService = () => {
         // Fetch application data using reference number
         if (!reference_number) {
           response.message = "Reference number is required for sub-requests";
-          return response;
+      return response;
         }
         
         const existingApplicationResult = await applicationRepository.getByReferenceNumber(reference_number);
@@ -811,7 +811,7 @@ const applicationService = () => {
         
         if (!existingApplicationResult.status || !existingApplicationResult.data || existingApplicationResult.data.length === 0) {
           response.message = `Invalid reference number: ${reference_number}`;
-          return response;
+      return response;
         }
         
         const existingApplication = existingApplicationResult.data[0];
