@@ -195,7 +195,7 @@ const applicationRepository = () => {
         FROM ${constants.TABLES.APPLICATION} app
         LEFT JOIN ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} apm ON app.id = apm.application_id
         LEFT JOIN ${constants.TABLES.PASSENGER} p ON apm.passenger_id = p.id
-        WHERE app.id = ? and p.status = ?`;
+        WHERE app.id = ? and apm.status = ?`;
       
       if (connection) {
         return await connection.query(query, [applicationId, constants.STATUS.PASSENGER.ACTIVE]);
