@@ -143,7 +143,7 @@ const applicationVisaRequestMappingRepository = () => {
         VALUES (?, ?, ?, ?)
       `;
 
-      const result = await MySql.query(query, [applicationId, visaRequestId, lastUpdatedBy, , constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
+      const result = await MySql.query(query, [applicationId, visaRequestId, lastUpdatedBy, constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
       
       response.setStatus(result.status);
       if (result.status && result.data) {
