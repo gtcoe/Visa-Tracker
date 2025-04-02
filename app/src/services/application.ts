@@ -335,13 +335,21 @@ const applicationService = () => {
       const isEmailSame = savedPassengerinfo.email === newPassengerinfo.email_id;
       logger.info(`Email comparison - ${generateError({savedEmail: savedPassengerinfo.email, newEmail: newPassengerinfo.email_id, isMatching: isEmailSame})}`);
       
-      const isDobSame = String(savedPassengerinfo.dob).substring(0,10) === newPassengerinfo.date_of_birth;
-      logger.info(`DOB comparison - ${generateError({savedDob: String(savedPassengerinfo.dob).substring(0,10), newDob: newPassengerinfo.date_of_birth, isMatching: isDobSame})}`);
+      // Fixed date handling - extract YYYY-MM-DD safely from ISO date string
+  
+      const savedDobFormatted = getDatePart(savedPassengerinfo.dob);
+      const isDobSame = savedDobFormatted === newPassengerinfo.date_of_birth;
+      logger.info(`DOB comparison - ${generateError({
+        savedDob: savedDobFormatted,
+        originalSavedDob: savedPassengerinfo.dob,
+        newDob: newPassengerinfo.date_of_birth, 
+        isMatching: isDobSame
+      })}`);
       
       const isProcessingBranchSame = savedPassengerinfo.processing_branch === newPassengerinfo.processing_branch;
       logger.info(`Processing branch comparison - ${generateError({savedBranch: savedPassengerinfo.processing_branch, newBranch: newPassengerinfo.processing_branch, isMatching: isProcessingBranchSame})}`);
       
-    const isPersonalInfoSame = 
+      const isPersonalInfoSame = 
         isFirstNameSame &&
         isLastNameSame &&
         isEmailSame &&
@@ -353,11 +361,23 @@ const applicationService = () => {
       const isPassportNumberSame = savedPassengerinfo.passport_number === newPassportInfo.passport_number;
       logger.info(`Passport number comparison - ${generateError({savedPassportNumber: savedPassengerinfo.passport_number, newPassportNumber: newPassportInfo.passport_number, isMatching: isPassportNumberSame})}`);
       
-      const isDateOfIssueSame = String(savedPassengerinfo.passport_date_of_issue).substring(0,10) === newPassportInfo.date_of_issue;
-      logger.info(`Passport date of issue comparison - ${generateError({savedDateOfIssue: String(savedPassengerinfo.passport_date_of_issue).substring(0,10), newDateOfIssue: newPassportInfo.date_of_issue, isMatching: isDateOfIssueSame})}`);
+      const savedDateOfIssueFormatted = getDatePart(savedPassengerinfo.passport_date_of_issue);
+      const isDateOfIssueSame = savedDateOfIssueFormatted === newPassportInfo.date_of_issue;
+      logger.info(`Passport date of issue comparison - ${generateError({
+        savedDateOfIssue: savedDateOfIssueFormatted,
+        originalSavedDateOfIssue: savedPassengerinfo.passport_date_of_issue,
+        newDateOfIssue: newPassportInfo.date_of_issue, 
+        isMatching: isDateOfIssueSame
+      })}`);
       
-      const isDateOfExpirySame = String(savedPassengerinfo.passport_date_of_expiry).substring(0,10) === newPassportInfo.date_of_expiry;
-      logger.info(`Passport date of expiry comparison - ${generateError({savedDateOfExpiry: String(savedPassengerinfo.passport_date_of_expiry).substring(0,10), newDateOfExpiry: newPassportInfo.date_of_expiry, isMatching: isDateOfExpirySame})}`);
+      const savedDateOfExpiryFormatted = getDatePart(savedPassengerinfo.passport_date_of_expiry);
+      const isDateOfExpirySame = savedDateOfExpiryFormatted === newPassportInfo.date_of_expiry;
+      logger.info(`Passport date of expiry comparison - ${generateError({
+        savedDateOfExpiry: savedDateOfExpiryFormatted,
+        originalSavedDateOfExpiry: savedPassengerinfo.passport_date_of_expiry,
+        newDateOfExpiry: newPassportInfo.date_of_expiry, 
+        isMatching: isDateOfExpirySame
+      })}`);
       
       const isIssueAtSame = savedPassengerinfo.passport_issue_at === newPassportInfo.issue_at;
       logger.info(`Passport issue at comparison - ${generateError({savedIssueAt: savedPassengerinfo.passport_issue_at, newIssueAt: newPassportInfo.issue_at, isMatching: isIssueAtSame})}`);
@@ -1018,6 +1038,21 @@ const applicationService = () => {
     } catch (e) {
       logger.error(`error in applicationService.createPassengerInfoFromApplicationData - ${generateError(e)}`);
       throw e;
+    }
+  };
+
+  const getDatePart = (dateValue: any): string => {
+    if (!dateValue) return '';
+    // Handle ISO date strings with T separator (e.g. 1983-12-12T00:00:00.000Z)
+    if (typeof dateValue === 'string' && dateValue.includes('T')) {
+      return dateValue.split('T')[0];
+    }
+    // Handle Date objects or other formats by converting to ISO and taking first 10 chars
+    try {
+      return new Date(dateValue).toISOString().substring(0,10);
+    } catch (e) {
+      // Fallback - try direct substring if date conversion fails
+      return String(dateValue).substring(0,10);
     }
   };
 
