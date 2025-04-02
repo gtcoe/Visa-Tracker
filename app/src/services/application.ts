@@ -335,8 +335,8 @@ const applicationService = () => {
       const isEmailSame = savedPassengerinfo.email === newPassengerinfo.email_id;
       logger.info(`Email comparison - ${generateError({savedEmail: savedPassengerinfo.email, newEmail: newPassengerinfo.email_id, isMatching: isEmailSame})}`);
       
-      const isDobSame = savedPassengerinfo.dob.substring(0,10) === newPassengerinfo.date_of_birth;
-      logger.info(`DOB comparison - ${generateError({savedDob: savedPassengerinfo.dob, newDob: newPassengerinfo.date_of_birth, isMatching: isDobSame})}`);
+      const isDobSame = (savedPassengerinfo.dob).substring(0,10) === newPassengerinfo.date_of_birth;
+      logger.info(`DOB comparison - ${generateError({savedDob: (savedPassengerinfo.dob).substring(0,10), newDob: newPassengerinfo.date_of_birth, isMatching: isDobSame})}`);
       
       const isProcessingBranchSame = savedPassengerinfo.processing_branch === newPassengerinfo.processing_branch;
       logger.info(`Processing branch comparison - ${generateError({savedBranch: savedPassengerinfo.processing_branch, newBranch: newPassengerinfo.processing_branch, isMatching: isProcessingBranchSame})}`);
@@ -353,11 +353,11 @@ const applicationService = () => {
       const isPassportNumberSame = savedPassengerinfo.passport_number === newPassportInfo.passport_number;
       logger.info(`Passport number comparison - ${generateError({savedPassportNumber: savedPassengerinfo.passport_number, newPassportNumber: newPassportInfo.passport_number, isMatching: isPassportNumberSame})}`);
       
-      const isDateOfIssueSame = savedPassengerinfo.passport_date_of_issue.substring(0,10) === newPassportInfo.date_of_issue;
-      logger.info(`Passport date of issue comparison - ${generateError({savedDateOfIssue: savedPassengerinfo.passport_date_of_issue, newDateOfIssue: newPassportInfo.date_of_issue, isMatching: isDateOfIssueSame})}`);
+      const isDateOfIssueSame = (savedPassengerinfo.passport_date_of_issue).substring(0,10) === newPassportInfo.date_of_issue;
+      logger.info(`Passport date of issue comparison - ${generateError({savedDateOfIssue: (savedPassengerinfo.passport_date_of_issue).substring(0,10), newDateOfIssue: newPassportInfo.date_of_issue, isMatching: isDateOfIssueSame})}`);
       
-      const isDateOfExpirySame = savedPassengerinfo.passport_date_of_expiry.substring(0,10) === newPassportInfo.date_of_expiry;
-      logger.info(`Passport date of expiry comparison - ${generateError({savedDateOfExpiry: savedPassengerinfo.passport_date_of_expiry, newDateOfExpiry: newPassportInfo.date_of_expiry, isMatching: isDateOfExpirySame})}`);
+      const isDateOfExpirySame = (savedPassengerinfo.passport_date_of_expiry).substring(0,10) === newPassportInfo.date_of_expiry;
+      logger.info(`Passport date of expiry comparison - ${generateError({savedDateOfExpiry: (savedPassengerinfo.passport_date_of_expiry).substring(0,10), newDateOfExpiry: newPassportInfo.date_of_expiry, isMatching: isDateOfExpirySame})}`);
       
       const isIssueAtSame = savedPassengerinfo.passport_issue_at === newPassportInfo.issue_at;
       logger.info(`Passport issue at comparison - ${generateError({savedIssueAt: savedPassengerinfo.passport_issue_at, newIssueAt: newPassportInfo.issue_at, isMatching: isIssueAtSame})}`);
