@@ -221,7 +221,7 @@ const applicationRepository = () => {
         SET 
           travel_date = ?,
           interview_date = ?,
-          file_number_1 = ?,
+          file_number_2 = ?,
           is_travel_date_tentative = ?,
           priority_submission = ?,
           olvt_number = ?,
@@ -233,7 +233,7 @@ const applicationRepository = () => {
       const params = [
         data.travel_date,
         data.interview_date,
-        data.file_number_1,
+        data.file_number_2,
         data.is_travel_date_tentative,
         data.priority_submission,
         data.olvt_number,

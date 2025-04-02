@@ -667,7 +667,7 @@ const applicationService = () => {
           id: application_id,
           travel_date: travel_info.travel_date,
           interview_date: travel_info.interview_date,
-          file_number_1: travel_info.file_no,
+          file_number_2: travel_info.file_no,
           is_travel_date_tentative: travel_info.is_travel_date_tentative,
           priority_submission: travel_info.priority_submission,
           olvt_number: mi_fields?.olvt_number || null,
