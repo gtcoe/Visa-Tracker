@@ -100,7 +100,7 @@ const clientRepository = () => {
   //Done
   const getAll = async (): Promise<GetClientDataDBResponse> => {
     try {
-      const query = `SELECT id, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by FROM ${constants.TABLES.CLIENT} order by id desc`;
+      const query = `SELECT id, name, user_id, type, address, branches, gst_number, owner_name, owner_phone, owner_email, spoke_name, spoke_phone, spoke_email, billing_cycle, country, state, city, zipcode, last_updated_by FROM ${constants.TABLES.CLIENT} order by id desc`;
       return await Mysql.query<ClientData[]>(query, []);
     } catch (e) {
       logger.error(`Error in getAllUsers: ${generateError(e)}`);
