@@ -27,8 +27,8 @@ const constants = {
     APPLICATION: {
       STEP1_DONE: 1,
       STEP2_DONE: 2,
-      STEP3_DONE: 2,
-      STEP4_DONE: 2,
+      STEP3_DONE: 3,
+      STEP4_DONE: 4,
     },
     PASSENGER: {
       ACTIVE: 1,
