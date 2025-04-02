@@ -195,12 +195,12 @@ const applicationRepository = () => {
         FROM ${constants.TABLES.APPLICATION} app
         LEFT JOIN ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} apm ON app.id = apm.application_id
         LEFT JOIN ${constants.TABLES.PASSENGER} p ON apm.passenger_id = p.id
-        WHERE app.id = ? and apm.status = ?`;
+        WHERE app.id = ? `;
       
       if (connection) {
-        return await connection.query(query, [applicationId, constants.STATUS.PASSENGER.ACTIVE]);
+        return await connection.query(query, [applicationId]);
       } else {
-        return await Mysql.query(query, [applicationId, constants.STATUS.PASSENGER.ACTIVE]);
+        return await Mysql.query(query, [applicationId]);
       }
     } catch (e) {
       logger.error(`Error in getApplicationWithPassenger: ${generateError(e)}`);
