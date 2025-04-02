@@ -200,7 +200,7 @@ const applicationRepository = () => {
       if (connection) {
         return await connection.query(query, [applicationId, constants.STATUS.PASSENGER.ACTIVE]);
       } else {
-        return await Mysql.query(query, [applicationId]);
+        return await Mysql.query(query, [applicationId, constants.STATUS.PASSENGER.ACTIVE]);
       }
     } catch (e) {
       logger.error(`Error in getApplicationWithPassenger: ${generateError(e)}`);
