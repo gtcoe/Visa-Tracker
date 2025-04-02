@@ -664,26 +664,29 @@ const applicationService = () => {
           const existingVisaRequestMap = new Map();
           existingVisaRequests.forEach(request => {
             // Create a unique key based on visa request properties
-            const key = `${request.visa_country}_${request.visa_category}_${request.nationality}_${request.state}_${request.entry_type}`;
+            const key = `${request.visa_country}_${request.visa_category}_${request.nationality}_${request.state}_${request.entry_type}_${request.remarks}`;
             existingVisaRequestMap.set(key, {
               id: request.id,
               mappingId: existingMappings.data?.find(m => m.visa_request_id === request.id)?.id
             });
           });
-          logger.info(`Created lookup map of existing visa requests - ${generateError({mapSize: existingVisaRequestMap.size})}`);
+          logger.info(`Created lookup map of existing visa requests - ${generateError({mapSize: existingVisaRequestMap.size, existingVisaRequestMap: existingVisaRequestMap})}`);
           
           // Identify which existing mappings to keep and which new visa requests to create
           const mappingsToKeep = new Set<number>();
           const newVisaRequestsData: VisaRequestData[] = [];
           
           for (const request of visa_requests) {
-            const key = `${request.visa_country}_${request.visa_category}_${request.nationality}_${request.state}_${request.entry_type}`;
-            
+            const key = `${request.visa_country}_${request.visa_category}_${request.nationality}_${request.state}_${request.entry_type}_${request.remark}`;
+            logger.info(`Visa_request key- ${generateError({key})}`);
             if (existingVisaRequestMap.has(key)) {
+              logger.info(`Visa_request key exists- ${generateError({key})}`);
+
               // This visa request already exists, keep the mapping
               const existingInfo = existingVisaRequestMap.get(key);
               if (existingInfo && existingInfo.mappingId) {
                 mappingsToKeep.add(existingInfo.mappingId);
+                existingVisaRequestMap.delete(key)
               }
             } else {
               // This is a new visa request, add it to the batch insert list
@@ -698,28 +701,28 @@ const applicationService = () => {
               });
             }
           }
-          logger.info(`Identified mappings to keep and new visa requests - ${generateError({mappingsToKeepCount: mappingsToKeep.size, newVisaRequestsCount: newVisaRequestsData.length})}`);
+          logger.info(`Identified mappings to keep and new visa requests - ${generateError({mappingsToKeep: mappingsToKeep, newVisaRequestsData: newVisaRequestsData, mappingsToRemove: existingVisaRequestMap})}`);
           
           // Mark mappings as inactive if they're not in the keep list
-          const mappingsToInactivate = existingMappings.data?.filter(
-            mapping => !mappingsToKeep.has(mapping.id!)
-          ) || [];
-          logger.info(`Identified mappings to inactivate - ${generateError({mappingsToInactivateCount: mappingsToInactivate.length})}`);
+          let mappingsToInactivate: number[] = [];
+          
+          // Extract mapping IDs from the remaining visa requests in the map
+          existingVisaRequestMap.forEach((value) => {
+            if (value && value.mappingId) {
+              mappingsToInactivate.push(value.mappingId);
+            }
+          });
+
+          logger.info(`Identified mappings to inactivate - ${generateError({mappingsToInactivate, mappingsToInactivateCount: mappingsToInactivate.length})}`);
           
           if (mappingsToInactivate.length > 0) {
-            // Update each mapping status to inactive one by one
-            for (const mapping of mappingsToInactivate) {
-              if (mapping.id) {
-                const inactivateMappingResult = await applicationVisaRequestMappingRepository.createMapping(
-                  mapping.application_id,
-                  mapping.visa_request_id,
-          token_user_id || 0,
-                  // TODO: Add proper API for updating mapping status
-                  // For now, we'll create new mappings and handle inactive status separately
-                );
-                logger.info(`Inactivate mapping result - ${generateError({inactivateMappingResult, mappingId: mapping.id})}`);
-              }
-            }
+            // Update each mapping status to inactive using the new function
+            const inactivateMappingsResult = await applicationVisaRequestMappingRepository.updateStatusByIds(
+              mappingsToInactivate,
+              constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.INACTIVE,
+              token_user_id || 0
+            );
+            logger.info(`Inactivate mappings result - ${generateError({inactivateMappingsResult, mappingsToInactivate})}`);
           }
           
           // Batch insert new visa requests
@@ -758,18 +761,18 @@ const applicationService = () => {
               logger.info(`Released MySQL connection after batch operations`);
             }
           }
-        } else if (existingMappings.data && existingMappings.data.length > 0) {
-          logger.info(`No visa requests provided, handling existing mappings - ${generateError({existingMappingsCount: existingMappings.data.length})}`);
+        // } else if (existingMappings.data && existingMappings.data.length > 0) {
+        //   logger.info(`No visa requests provided, handling existing mappings - ${generateError({existingMappingsCount: existingMappings.data.length})}`);
           
-          // No visa requests provided, mark all existing mappings as inactive
-          // Similar to above, we need to handle this case through individual updates
-          for (const mapping of existingMappings.data) {
-            if (mapping.id) {
-              // TODO: Add proper API for updating mapping status
-              // For now, we'll handle this through existing APIs
-              logger.info(`Should inactivate mapping - ${generateError({mappingId: mapping.id})}`);
-            }
-          }
+        //   // No visa requests provided, mark all existing mappings as inactive
+        //   // Similar to above, we need to handle this case through individual updates
+        //   for (const mapping of existingMappings.data) {
+        //     if (mapping.id) {
+        //       // TODO: Add proper API for updating mapping status
+        //       // For now, we'll handle this through existing APIs
+        //       logger.info(`Should inactivate mapping - ${generateError({mappingId: mapping.id})}`);
+        //     }
+        //   }
         }
         
         // Update application with basic information

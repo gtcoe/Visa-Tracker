@@ -2,11 +2,13 @@ import MySql from "../database/mySql";
 import Response from "../models/response";
 import { logger } from "../logging";
 import { generateError } from "../services/util";
+import constants from "@/config/constants/constants";
 
 export interface ApplicationVisaRequestMappingData {
   id?: number;
   application_id: number;
   visa_request_id: number;
+  status: number;
   last_updated_by: number;
   created_at?: string;
   updated_at?: string;
@@ -33,10 +35,10 @@ const applicationVisaRequestMappingRepository = () => {
           created_at,
           updated_at
         FROM application_visa_request_mapping
-        WHERE application_id = ?
+        WHERE application_id = ? and status = ? 
       `;
 
-      const result = await MySql.query<ApplicationVisaRequestMappingData[]>(query, [applicationId]);
+      const result = await MySql.query<ApplicationVisaRequestMappingData[]>(query, [applicationId, constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
       return {
         status: result.status,
         data: result.data || [],
@@ -72,10 +74,10 @@ const applicationVisaRequestMappingRepository = () => {
           created_at,
           updated_at
         FROM application_visa_request_mapping
-        WHERE application_id IN (?)
+        WHERE application_id IN (?) and status = ? 
       `;
 
-      const result = await MySql.query<ApplicationVisaRequestMappingData[]>(query, [applicationIds]);
+      const result = await MySql.query<ApplicationVisaRequestMappingData[]>(query, [applicationIds, constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
       
       return {
         status: result.status,
@@ -105,10 +107,10 @@ const applicationVisaRequestMappingRepository = () => {
           created_at,
           updated_at
         FROM application_visa_request_mapping
-        WHERE visa_request_id = ?
+        WHERE visa_request_id = ? and status = ? 
       `;
 
-      const result = await MySql.query<ApplicationVisaRequestMappingData[]>(query, [visaRequestId]);
+      const result = await MySql.query<ApplicationVisaRequestMappingData[]>(query, [visaRequestId, constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
       
       return {
         status: result.status,
@@ -137,11 +139,11 @@ const applicationVisaRequestMappingRepository = () => {
     try {
       const query = `
         INSERT INTO application_visa_request_mapping 
-        (application_id, visa_request_id, last_updated_by) 
-        VALUES (?, ?, ?)
+        (application_id, visa_request_id, last_updated_by, status) 
+        VALUES (?, ?, ?, ?)
       `;
 
-      const result = await MySql.query(query, [applicationId, visaRequestId, lastUpdatedBy]);
+      const result = await MySql.query(query, [applicationId, visaRequestId, lastUpdatedBy, , constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
       
       response.setStatus(result.status);
       if (result.status && result.data) {
@@ -177,8 +179,8 @@ const applicationVisaRequestMappingRepository = () => {
       // Use query method directly with simple inserts
       const query = `
         INSERT INTO application_visa_request_mapping 
-        (application_id, visa_request_id, last_updated_by) 
-        VALUES (?, ?, ?)
+        (application_id, visa_request_id, last_updated_by, status) 
+        VALUES (?, ?, ?, ?)
       `;
 
       // Prepare mapping combinations based on the input arrays
@@ -188,23 +190,23 @@ const applicationVisaRequestMappingRepository = () => {
       if (visaRequestIds.length === applicationIds.length) {
         // If equal length, create one-to-one mappings
         for (let i = 0; i < applicationIds.length; i++) {
-          mappingsToCreate.push([applicationIds[i], visaRequestIds[i], lastUpdatedBy]);
+          mappingsToCreate.push([applicationIds[i], visaRequestIds[i], lastUpdatedBy, constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
         }
       } else if (visaRequestIds.length === 1) {
         // If only one visa request, map it to all applications
         for (const appId of applicationIds) {
-          mappingsToCreate.push([appId, visaRequestIds[0], lastUpdatedBy]);
+          mappingsToCreate.push([appId, visaRequestIds[0], lastUpdatedBy, constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
         }
       } else if (applicationIds.length === 1) {
         // If only one application, map all visa requests to it
         for (const visaId of visaRequestIds) {
-          mappingsToCreate.push([applicationIds[0], visaId, lastUpdatedBy]);
+          mappingsToCreate.push([applicationIds[0], visaId, lastUpdatedBy, constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
         }
       } else {
         // For other cases, create a cartesian product (each app with each visa)
         for (const appId of applicationIds) {
           for (const visaId of visaRequestIds) {
-            mappingsToCreate.push([appId, visaId, lastUpdatedBy]);
+            mappingsToCreate.push([appId, visaId, lastUpdatedBy, constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE]);
           }
         }
       }
@@ -249,12 +251,54 @@ const applicationVisaRequestMappingRepository = () => {
     }
   };
 
+  /**
+   * Update the status of visa request mappings by their IDs
+   */
+  const updateStatusByIds = async (
+    mappingIds: number[],
+    status: number,
+    lastUpdatedBy: number
+  ): Promise<Response> => {
+    const response = new Response(false);
+
+    try {
+      if (mappingIds.length === 0) {
+        response.setStatus(true);
+        response.data = { affectedRows: 0 };
+        return response;
+      }
+
+      const query = `
+        UPDATE application_visa_request_mapping 
+        SET status = ?, last_updated_by = ?, updated_at = NOW()
+        WHERE id IN (${mappingIds.join(',')})
+      `;
+
+      const result = await MySql.query(query, [status, lastUpdatedBy]);
+      
+      response.setStatus(result.status);
+      if (result.status && result.data) {
+        response.data = { 
+          affectedRows: result.data.affectedRows || 0
+        };
+      } else {
+        response.setMessage("Unable to update application-visa request mapping status.");
+      }
+      return response;
+    } catch (e) {
+      logger.error(`Error in applicationVisaRequestMappingRepository.updateStatusByIds: ${generateError(e)}`);
+      response.setMessage("Unable to update application-visa request mapping status.");
+      return response;
+    }
+  };
+
   return {
     getByApplicationId,
     getByApplicationIds,
     getByVisaRequestId,
     createMapping,
-    batchCreateMappings
+    batchCreateMappings,
+    updateStatusByIds
   };
 };
 

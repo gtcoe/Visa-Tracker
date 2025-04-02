@@ -39,6 +39,10 @@ const constants = {
       ACTIVE: 1,
       INACTIVE: 2,
     },
+    APPLICATION_VISA_REQUEST_MAPPING: {
+      ACTIVE: 1,
+      INACTIVE: 2,
+    },
   },
 
   USER_TABLE: {
