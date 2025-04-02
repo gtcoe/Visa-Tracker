@@ -37,7 +37,7 @@ export interface AddressInfo {
   address_line2?: string;
   country: number;
   state: number;
-  city: number;
+  city: string;
   zip: string;
   occupation: string;
   position: string;

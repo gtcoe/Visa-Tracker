@@ -149,7 +149,7 @@ const step3: ValidationSchema = {
           required: true,
         },
         city: {
-          type: "number",
+          type: "string",
           required: true,
         },
         zip: {
