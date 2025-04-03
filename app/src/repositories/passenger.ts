@@ -258,7 +258,7 @@ const passengerRepository = () => {
       let query = `SELECT id, first_name, last_name, email, dob, phone, processing_branch, passport_number, 
       passport_date_of_issue, passport_date_of_expiry, passport_issue_at, 
       count_of_expired_passport, expired_passport_number, address_line_1, 
-      address_line_2, country, state, city, zip, occupation, position, last_updated_by, status FROM ${constants.TABLES.PASSENGER} WHERE `;
+      address_line_2, country, state, city, zip, occupation, position, last_updated_by FROM ${constants.TABLES.PASSENGER} WHERE `;
 
       let where: string = "";
 
@@ -274,7 +274,7 @@ const passengerRepository = () => {
 
       return await Mysql.query<PassengerData[]>(query, []);
     } catch (e) {
-      logger.error(`Error in search: ${generateError(e)}`);
+      logger.error(`Error in getByPassengerIds: ${generateError(e)}`);
       throw e;
     }
   };
