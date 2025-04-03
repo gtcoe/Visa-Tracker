@@ -18,7 +18,7 @@ const validationSchema: ValidationSchema = {
       type: "number",
       required: true,
       minValue: APPLICATION_EXTERNAL_STATUS.DOC_RECIVED,
-      maxValue: APPLICATION_EXTERNAL_STATUS.PASSPORT_DISPATCHED_APPROVAL_AWAITED,
+      maxValue: APPLICATION_EXTERNAL_STATUS.WITHDRAWN_SENT,
     },
     team_remarks: {
       type: "string",
