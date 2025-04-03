@@ -358,11 +358,12 @@ const applicationRepository = () => {
     try {
       // Build query with joins for all relevant tables
       let query = `
-        SELECT DISTINCT app.*, p.*, c.*, vr.*
+        SELECT DISTINCT app.*, p.*, c.*, vr.*, u.email as updated_by_email
         FROM ${constants.TABLES.APPLICATION} app
         LEFT JOIN ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} apm ON app.id = apm.application_id AND apm.status = ${constants.STATUS.APPLICATION_PASSENGER_MAPPING.ACTIVE}
         LEFT JOIN ${constants.TABLES.PASSENGER} p ON apm.passenger_id = p.id
         LEFT JOIN ${constants.TABLES.CLIENT} c ON app.client_user_id = c.user_id
+        LEFT JOIN ${constants.TABLES.USER} u ON app.last_updated_by = u.id
         LEFT JOIN ${constants.TABLES.APPLICATION_VISA_REQUEST_MAPPING} avrm ON app.id = avrm.application_id AND avrm.status = ${constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE}
         LEFT JOIN ${constants.TABLES.VISA_REQUESTS} vr ON avrm.visa_request_id = vr.id
         WHERE app.status = ${constants.STATUS.APPLICATION.STEP4_DONE}

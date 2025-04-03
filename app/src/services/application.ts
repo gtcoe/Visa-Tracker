@@ -326,10 +326,11 @@ const applicationService = () => {
         country: request.country || 0,
         billing_to_company: request.billing_to_company || ''
       };
-      
-      // Search applications
+
+      const queryStartTime = Date.now();
       const searchResult = await applicationRepository.searchApplications(searchParams);
-      logger.info(`Search applications result - ${generateError({count: searchResult.data?.length || 0})}`);
+      const queryEndTime = Date.now();
+      logger.info(`Repository searchApplications completed in ${queryEndTime - queryStartTime}ms with ${searchResult.data?.length || 0} results`);
       
       if (!searchResult.status) {
         response.setMessage("Failed to search applications");
@@ -506,7 +507,7 @@ const applicationService = () => {
       const isProcessingBranchSame = savedPassengerinfo.processing_branch === newPassengerinfo.processing_branch;
       logger.info(`Processing branch comparison - ${generateError({savedBranch: savedPassengerinfo.processing_branch, newBranch: newPassengerinfo.processing_branch, isMatching: isProcessingBranchSame})}`);
       
-      const isPersonalInfoSame = 
+    const isPersonalInfoSame = 
         isFirstNameSame &&
         isLastNameSame &&
         isEmailSame &&
@@ -908,7 +909,7 @@ const applicationService = () => {
                   const createMappingResult = await applicationVisaRequestMappingRepository.createMapping(
                     application_id,
                     visaId,
-                    token_user_id || 0,
+          token_user_id || 0,
                   );
                   logger.info(`Create mapping result for new visa ID ${visaId} - ${generateError({createMappingResult})}`);
                 }
