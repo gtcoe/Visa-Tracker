@@ -149,6 +149,41 @@ const applicationRepository = () => {
     }
   };
 
+  const updateApplicationDetails = async (
+    applicationId: number,
+    queue: number,
+    externalStatus: number,
+    teamRemarks?: string,
+    clientRemarks?: string,
+    billingRemarks?: string,
+    lastUpdatedBy?: number
+  ): Promise<any> => {
+    try {
+      const query = `UPDATE ${constants.TABLES.APPLICATION} 
+                SET queue = ?, external_status = ?, 
+                team_remarks = ?, client_remarks = ?, billing_remarks = ?,
+                last_updated_by = ? 
+                WHERE id = ?`;
+      const params = [
+        queue, 
+        externalStatus, 
+        teamRemarks || "", 
+        clientRemarks || "", 
+        billingRemarks || "", 
+        lastUpdatedBy, 
+        applicationId
+      ];
+      const resp = await Mysql.query(query, params);
+      if (resp.data.affectedRows > 0) {
+        insertHistory(applicationId);
+      }
+      return resp;
+    } catch (e) {
+      logger.error(`Error in updateApplicationDetails: ${generateError(e)}`);
+      throw e;
+    }
+  };
+
   const updateStep4Data = async (
     request: AddStep4DataRequest,
     applicationId: number,
@@ -460,6 +495,7 @@ const applicationRepository = () => {
     getById,
     searchSubmittedApplicationsByReferenceNumber,
     updateStatus,
+    updateApplicationDetails,
     updateStep4Data,
     insertHistory,
     getApplicationWithPassenger,

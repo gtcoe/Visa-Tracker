@@ -1217,6 +1217,92 @@ const applicationService = () => {
     }
   };
 
+  /**
+   * Update Status
+   */
+  // const updateStatus = async (request: any): Promise<ServiceResponse> => {
+  //   try {
+  //     const { user_id, status, token_user_id } = request;
+  //     const userDetails = await userRepository.getById(user_id);
+  //     if (userDetails.error || userDetails.data.length < 1) {
+  //       logger.error("Invalid user ID");
+  //       return responseBuilder(
+  //         false,
+  //         responseMessages.INVALID_USER_ID,
+  //         null,
+  //         null
+  //       );
+  //     }
+  //     const resp = await applicationRepository.updateStatus(
+  //       status,
+  //       user_id,
+  //       token_user_id
+  //     );
+  //     if (resp.error) {
+  //       return responseBuilder(false, responseMessages.UPDATE_FAILED, null, null);
+  //     }
+  //     return responseBuilder(true, responseMessages.UPDATE_SUCCESS, null, null);
+  //   } catch (e) {
+  //     logger.error(`Error in updateStatus ${generateError(e)}`);
+  //     return responseBuilder(
+  //       false,
+  //       responseMessages.OPERATION_FAILED,
+  //       null,
+  //       null
+  //     );
+  //   }
+  // };
+
+  /**
+   * Update Application Details
+   */
+  const updateApplicationDetails = async (request: any): Promise<ResponseModel> => {
+    const response = new ResponseModel(false);
+    try {
+      const { 
+        id, 
+        queue, 
+        external_status, 
+        team_remarks, 
+        client_remarks, 
+        billing_remarks, 
+        token_user_id 
+      } = request;
+      
+      // Verify application exists
+      const applicationDetails = await applicationRepository.getById(id);
+      if (! applicationDetails.status || ! applicationDetails.data ||   applicationDetails.data.length === 0) {
+        response.message = `Application with ID ${id} not found`;
+        return response;
+      }
+      
+      // Update application details
+      const resp = await applicationRepository.updateApplicationDetails(
+        id,
+        queue,
+        external_status,
+        team_remarks,
+        client_remarks,
+        billing_remarks,
+        token_user_id
+      );
+      
+      if (!resp.status) {
+        response.message = "Failed to update application details";
+        return response;
+      }
+      
+      response.setStatus(true);
+      response.message = "Application details updated successfully";
+      return response;
+      
+    } catch (e) {
+      logger.error(`Error in updateApplicationDetails ${generateError(e)}`);
+      response.message = "Failed to update application details";
+      return response;
+    }
+  };
+
   return {
     addStep1Data,
     addStep2Data,
@@ -1224,6 +1310,7 @@ const applicationService = () => {
     addStep4Data,
     searchPax,
     search,
+    updateApplicationDetails,
   };
 };
 

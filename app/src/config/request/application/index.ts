@@ -7,6 +7,7 @@ import getById from "./getById";
 import updateStatus from "./updateStatus";
 import searchPax from "./searchPax";
 import search from "./search";
+import updateApplication from "./updateApplication";
 
 const ApplicationRequestValidationConfig = {
   step1,
@@ -18,6 +19,7 @@ const ApplicationRequestValidationConfig = {
   updateStatus,
   searchPax,
   search,
+  updateApplication,
 };
 
 export default ApplicationRequestValidationConfig;

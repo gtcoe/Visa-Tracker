@@ -168,6 +168,19 @@ const ApplicationController = () => {
     }
   };
 
+  const updateApplicationDetails = async (req: Request, res: Response): Promise<void> => {
+    try {
+      
+      const updateResponse = await applicationService.updateApplicationDetails(req.body);
+      res.status(200).json(updateResponse);
+    } catch (e: any) {
+      logger.error(`Error in updateApplicationDetails: ${generateError(e)}`);
+      const response = new ResponseModel(false);
+      response.message = "Internal Server Error";
+      res.status(500).send(response);
+    }
+  };
+
   return {
     addStep1Data,
     addStep2Data,
@@ -175,6 +188,7 @@ const ApplicationController = () => {
     addStep4Data,
     search,
     addStep3Data,
+    updateApplicationDetails,
   };
 };
 

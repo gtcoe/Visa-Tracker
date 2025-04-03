@@ -86,4 +86,16 @@ applicationRouter
     applicationController.search
   );
 
+// Update Application Details
+applicationRouter
+  .route("/:id")
+  .put(
+    ...withAuth([
+      constants.USER_TABLE.TYPE.ADMIN,
+      constants.USER_TABLE.TYPE.MANAGER,
+    ]),
+    requestValidator(applicationRequestValidationConfig.updateApplication),
+    applicationController.updateApplicationDetails
+  );
+
 export default applicationRouter;
