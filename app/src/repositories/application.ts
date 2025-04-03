@@ -393,7 +393,7 @@ const applicationRepository = () => {
     try {
       // Build query with joins for all relevant tables
       let query = `
-        SELECT DISTINCT app.*, p.*, c.*, vr.*, u.email as updated_by_email
+        SELECT DISTINCT app.*, p.*, c.*, vr.*, u.email as updated_by_email, app.id as application_id
         FROM ${constants.TABLES.APPLICATION} app
         LEFT JOIN ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} apm ON app.id = apm.application_id AND apm.status = ${constants.STATUS.APPLICATION_PASSENGER_MAPPING.ACTIVE}
         LEFT JOIN ${constants.TABLES.PASSENGER} p ON apm.passenger_id = p.id
