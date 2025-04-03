@@ -305,16 +305,180 @@ const applicationService = () => {
     }
   };
 
-  const search = async (_: SearchRequest): Promise<any> => {
+  const search = async (request: SearchRequest): Promise<any> => {
     const response = new Response(false);
     try {
+      logger.info(`Searching applications with filters - ${generateError(request)}`);
+      
+      // Convert request to search parameters
+      const searchParams = {
+        reference_number: request.reference_number || '',
+        customer_type: request.customer_type || 0,
+        client_user_id: request.customer || 0, // Use customer from SearchRequest
+        name: request.name || '',
+        passport_number: '', // Not present in SearchRequest, use empty string
+        visa_branch: request.visa_branch || 0,
+        entry_generation_branch: request.entry_generation_branch || 0,
+        from_date: request.from_date || '',
+        to_date: request.to_date || '',
+        queue: request.queue || 0,
+        status: request.status || 0,
+        country: request.country || 0,
+        billing_to_company: request.billing_to_company || ''
+      };
+      
+      // Search applications
+      const searchResult = await applicationRepository.searchApplications(searchParams);
+      logger.info(`Search applications result - ${generateError({count: searchResult.data?.length || 0})}`);
+      
+      if (!searchResult.status) {
+        response.setMessage("Failed to search applications");
+        return response;
+      }
+      
+      // No applications found
+      if (!searchResult.data || searchResult.data.length === 0) {
+        response.setStatus(true);
+        response.data = { applications: [] };
+        return response;
+      }
+      
+      // Fetch client and passenger details for each application
+      const applications = searchResult.data;
+      
+      // Define an interface for enriched applications to avoid implicit any[]
+      interface EnrichedApplication extends RepoApplicationData {
+        passenger: {
+          id: number;
+          first_name: string;
+          last_name: string;
+          full_name: string;
+          email: string;
+          passport_number: string;
+          processing_branch: number;
+        } | null;
+        client: {
+          id: number;
+          name: string;
+          type: number;
+        } | null;
+      }
+      
+      const enrichedApplications: EnrichedApplication[] = [];
+      
+      // Get unique client user IDs
+      const clientUserIds = [...new Set(applications.map(app => app.client_user_id).filter(Boolean))];
+      
+      // Get client data for all client user IDs in one query
+      const clientsData: Map<number, any> = new Map();
+      if (clientUserIds.length > 0) {
+        const clientsResult = await Promise.all(
+          clientUserIds.map(userId => clientRepository.getByUserId(userId))
+        );
+        
+        clientsResult.forEach(result => {
+          if (result.status && result.data && result.data.length > 0) {
+            const client = result.data[0];
+            clientsData.set(client.user_id, client);
+          }
+        });
+      }
+      
+      // Get application IDs and fetch passengers
+      const applicationIds = applications.map(app => app.id).filter(Boolean) as number[];
+      
+      // Get passengers for all applications
+      let passengersMap: Map<number, RepoPassengerData> = new Map();
+      if (applicationIds.length > 0) {
+        // Get mappings
+        const mappingsResult = await applicationPassengerRepository.getByApplicationIds(
+          applicationIds, 
+          [constants.STATUS.APPLICATION_PASSENGER_MAPPING.ACTIVE]
+        );
+        
+        if (mappingsResult.status && mappingsResult.data && mappingsResult.data.length > 0) {
+          // Get unique passenger IDs
+          const passengerIds = [...new Set(
+            mappingsResult.data
+              .map(mapping => mapping.passenger_id)
+              .filter(Boolean)
+          )] as number[];
+          
+          // Get passenger data
+          const passengersResult = await passengerRepository.getByPassengerIds(passengerIds);
+          
+          if (passengersResult.status && passengersResult.data) {
+            // Create passenger map by ID
+            passengersResult.data.forEach(passenger => {
+              if (passenger.id) {
+                passengersMap.set(passenger.id, passenger);
+              }
+            });
+            
+            // Create application to passenger map
+            mappingsResult.data.forEach(mapping => {
+              if (mapping.application_id && mapping.passenger_id) {
+                // Retrieve the passenger data from the map
+                const passengerId = mapping.passenger_id;
+                const passenger = passengersMap.get(passengerId);
+                
+                if (!passenger) return;
+                
+                // Enrich applications with passenger and client data
+                const application = applications.find(app => app.id === mapping.application_id);
+                if (application) {
+                  const clientData = clientsData.get(application.client_user_id);
+                  
+                  enrichedApplications.push({
+                    ...application,
+                    passenger: {
+                      id: passenger.id || 0,
+                      first_name: passenger.first_name,
+                      last_name: passenger.last_name,
+                      full_name: `${passenger.first_name} ${passenger.last_name}`,
+                      email: passenger.email,
+                      passport_number: passenger.passport_number,
+                      processing_branch: passenger.processing_branch
+                    },
+                    client: clientData ? {
+                      id: clientData.id,
+                      name: clientData.name,
+                      type: clientData.type
+                    } : null
+                  });
+                }
+              }
+            });
+          }
+        }
+      }
+      
+      // If some applications don't have passenger data, add them with null passenger
+      applications.forEach(app => {
+        if (!enrichedApplications.some(enriched => enriched.id === app.id)) {
+          const clientData = app.client_user_id ? clientsData.get(app.client_user_id) : null;
+          
+          enrichedApplications.push({
+            ...app,
+            passenger: null,
+            client: clientData ? {
+              id: clientData.id,
+              name: clientData.name,
+              type: clientData.type
+            } : null
+          });
+        }
+      });
+      
       response.setStatus(true);
+      response.data = { applications: enrichedApplications };
       return response;
     } catch (e) {
       logger.error(
-        `error in applicationService.SearchRequest - ${generateError(e)}`
+        `error in applicationService.search - ${generateError(e)}`
       );
-      throw e;
+      response.setMessage("An error occurred while searching applications");
+      return response;
     }
   };
 

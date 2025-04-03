@@ -27,7 +27,7 @@ const search: ValidationSchema = {
       required: false,
     },
     entry_generation_branch: {
-      type: "string",
+      type: "number",
       required: false,
     },
     from_date: {
@@ -47,7 +47,7 @@ const search: ValidationSchema = {
       required: false,
     },
     country: {
-      type: "string",
+      type: "number",
       required: false,
     },
     billing_to_company: {

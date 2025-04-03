@@ -28,7 +28,7 @@ import {
 } from "../models/Application/searchPax";
 import {
   SearchRequest,
-  convertRequestToSearchRequestt,
+  convertRequestToSearchRequest,
 } from "../models/Application/tracker";
 
 const applicationService = ApplicationService();
@@ -114,14 +114,14 @@ const ApplicationController = () => {
   const search = async (req: Request, res: Response): Promise<void> => {
     const response = new ResponseModel(false);
     try {
-      const request: SearchRequest = convertRequestToSearchRequestt(req.body);
+      const request: SearchRequest = convertRequestToSearchRequest(req.body);
 
-      const filterAbsent: boolean = validateSearchParams(request);
-      if (filterAbsent) {
-        response.message = "Search parameters missing";
-        res.status(400).send(response);
-        return;
-      }
+      // const filterAbsent: boolean = validateSearchParams(request);
+      // if (filterAbsent) {
+      //   response.message = "Search parameters missing";
+      //   res.status(400).send(response);
+      //   return;
+      // }
 
       const resp = await applicationService.search(request);
       res.send(resp);

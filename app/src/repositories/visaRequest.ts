@@ -2,7 +2,7 @@ import MySql from "../database/mySql";
 import Response from "../models/response";
 import { logger } from "../logging";
 import { generateError } from "../services/util";
-
+import constants from "../config/constants/constants";
 export interface VisaRequestData {
   id?: number;
   visa_country: number;
@@ -40,7 +40,7 @@ const visaRequestRepository = () => {
           last_updated_by,
           created_at,
           updated_at
-        FROM visa_requests
+        FROM ${constants.TABLES.VISA_REQUESTS}
         WHERE id = ?
       `;
 
@@ -83,7 +83,7 @@ const visaRequestRepository = () => {
           last_updated_by,
           created_at,
           updated_at
-        FROM visa_requests
+        FROM ${constants.TABLES.VISA_REQUESTS}
         WHERE id IN (?)
       `;
 
@@ -110,7 +110,7 @@ const visaRequestRepository = () => {
 
     try {
       const query = `
-        INSERT INTO visa_requests 
+        INSERT INTO ${constants.TABLES.VISA_REQUESTS} 
         (visa_country, visa_category, nationality, state, entry_type, remarks, last_updated_by) 
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `;
@@ -165,7 +165,7 @@ const visaRequestRepository = () => {
 
       // Use query method directly with simple inserts
       const query = `
-        INSERT INTO visa_requests 
+        INSERT INTO ${constants.TABLES.VISA_REQUESTS} 
         (visa_country, visa_category, nationality, state, entry_type, remarks, last_updated_by) 
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `;

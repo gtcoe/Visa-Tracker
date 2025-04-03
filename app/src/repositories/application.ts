@@ -337,6 +337,124 @@ const applicationRepository = () => {
     }
   };
 
+  /**
+   * Search applications with various filters
+   */
+  const searchApplications = async (params: {
+    reference_number?: string;
+    customer_type?: number;
+    client_user_id?: number;
+    name?: string;
+    passport_number?: string;
+    visa_branch?: number;
+    entry_generation_branch?: number;
+    from_date?: string;
+    to_date?: string;
+    queue?: number;
+    status?: number;
+    country?: number;
+    billing_to_company?: string;
+  }): Promise<GetApplicationDataDBResponse> => {
+    try {
+      // Build query with joins for all relevant tables
+      let query = `
+        SELECT DISTINCT app.* 
+        FROM ${constants.TABLES.APPLICATION} app
+        LEFT JOIN ${constants.TABLES.APPLICATION_PASSENGER_MAPPING} apm ON app.id = apm.application_id AND apm.status = ${constants.STATUS.APPLICATION_PASSENGER_MAPPING.ACTIVE}
+        LEFT JOIN ${constants.TABLES.PASSENGER} p ON apm.passenger_id = p.id
+        LEFT JOIN ${constants.TABLES.CLIENT} c ON app.client_user_id = c.user_id
+        LEFT JOIN ${constants.TABLES.APPLICATION_VISA_REQUEST_MAPPING} avrm ON app.id = avrm.application_id AND avrm.status = ${constants.STATUS.APPLICATION_VISA_REQUEST_MAPPING.ACTIVE}
+        LEFT JOIN ${constants.TABLES.VISA_REQUESTS} vr ON avrm.visa_request_id = vr.id
+        WHERE 1=1
+      `;
+      
+      const queryParams: any[] = [];
+      
+      // Add conditions based on params
+      if (params.reference_number && params.reference_number.trim()) {
+        query += ` AND app.reference_number LIKE ?`;
+        queryParams.push(`%${params.reference_number.trim()}%`);
+      }
+      
+      if (params.customer_type && params.customer_type > 0) {
+        query += ` AND c.type = ?`;
+        queryParams.push(params.customer_type);
+      }
+      
+      if (params.client_user_id && params.client_user_id > 0) {
+        query += ` AND app.client_user_id = ?`;
+        queryParams.push(params.client_user_id);
+      }
+      
+      if (params.name && params.name.trim()) {
+        query += ` AND (p.first_name LIKE ? OR p.last_name LIKE ? OR CONCAT(p.first_name, ' ', p.last_name) LIKE ?)`;
+        const nameParam = `%${params.name.trim()}%`;
+        queryParams.push(nameParam, nameParam, nameParam);
+      }
+      
+      if (params.passport_number && params.passport_number.trim()) {
+        query += ` AND p.passport_number LIKE ?`;
+        queryParams.push(`%${params.passport_number.trim()}%`);
+      }
+      
+      if (params.visa_branch && params.visa_branch > 0) {
+        query += ` AND p.processing_branch = ?`;
+        queryParams.push(params.visa_branch);
+      }
+      
+      // if (params.entry_generation_branch && params.entry_generation_branch > 0) {
+      //   query += ` AND app.processing_branch = ?`;
+      //   queryParams.push(params.entry_generation_branch);
+      // }
+      
+      if (params.from_date && params.from_date.trim()) {
+        query += ` AND app.created_at >= ? 00:00:00`;
+        queryParams.push(params.from_date.trim());
+      }
+      
+      if (params.to_date && params.to_date.trim()) {
+        query += ` AND app.created_at <= ? 23:59:59`;
+        queryParams.push(params.to_date.trim());
+      } else {
+        // If no to_date provided, use current date
+        query += ` AND app.created_at <= CURRENT_DATE() 23:59:59`;
+      }
+      
+      if (params.queue && params.queue > 0) {
+        query += ` AND app.queue = ?`;
+        queryParams.push(params.queue);
+      }
+      
+      if (params.status && params.status > 0) {
+        query += ` AND app.external_status = ?`;
+        queryParams.push(params.status);
+      }
+      
+      if (params.country && params.country > 0) {
+        query += ` AND vr.visa_country = ?`;
+        queryParams.push(params.country);
+      }
+      
+      if (params.billing_to_company && params.billing_to_company.trim()) {
+        query += ` AND c.name LIKE ?`;
+        queryParams.push(`%${params.billing_to_company.trim()}%`);
+      }
+      
+      // Order by most recent applications first
+      query += ` ORDER BY app.id DESC`;
+      logger.info(`Query: ${generateError(query)}`);
+      logger.info(`Query Params: ${generateError(queryParams)}`);
+      const result = await Mysql.query<ApplicationData[]>(query, queryParams);
+      return result;
+    } catch (e) {
+      logger.error(`Error in searchApplications: ${generateError(e)}`);
+      return {
+        status: false,
+        data: null
+      };
+    }
+  };
+
   return {
     insertAddStep1Data,
     getByReferenceNumber,
@@ -347,7 +465,8 @@ const applicationRepository = () => {
     insertHistory,
     getApplicationWithPassenger,
     updateStep3Data,
-    batchInsertApplications
+    batchInsertApplications,
+    searchApplications
   };
 };
 
