@@ -4,8 +4,6 @@ import Response from "../models/response";
 import { generateError } from "./util";
 import { SendEmailRequest, EMAIL_TYPE } from "../models/Email/sendEmailRequest";
 import constants from "../config/constants/constants";
-import ClientRepository, {
-} from "../repositories/client";
 import { COUNTRY, COUNTRY_DISPLAY_NAME, VISA_CATEGORY, VISA_CATEGORY_LABELS, NATIONALITY, NATIONALITY_LABELS } from "../config/constants/geographical";
 
 // Create a nodemailer transporter
@@ -28,7 +26,6 @@ const createTransporter = () => {
 };
 
 const emailService = () => {
-  const clientRepository = ClientRepository();
 
   // Get email content based on email type
   const getEmailContent = (type: EMAIL_TYPE, data?: Record<string, any>) => {
@@ -109,7 +106,7 @@ const emailService = () => {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
               
-              <p>Dear ${data?.recipientName || '{Recipient Name}'},</p>
+              <p>Dear User,</p>
               
               <p>We are pleased to provide you with the official document checklist for your upcoming ${data?.country || '{COUNTRY}'} ${data?.category || '{CATEGORY}'} visa application. This checklist has been specifically tailored for applicants of ${data?.nationality || '{NATIONALITY}'} nationality to ensure compliance with all current immigration requirements.</p>
               
@@ -226,18 +223,10 @@ const emailService = () => {
       // Handle different email types
       switch (request.type) {
         case constants.EMAIL_TYPE.DOCUMENT_CHECKLIST:
-          // Get client information from database
-          const clientInfo = await clientRepository.getClientByEmail(request.emails);
-          
-          if (!(clientInfo.data && clientInfo.data.length === request.emails.length)) {
-            logger.error(`invalid_email_passed: ${generateError(request)}`);
-            throw new Error('invalid_email_passed');
-          }
           
           // Create data for each client
-          for (const client of clientInfo.data) {
-            recipientData[client.owner_email] = {
-              recipientName: client.name,
+          for (const email of request.emails) {
+            recipientData[email] = {
               country: COUNTRY_DISPLAY_NAME[request.data?.visaCountry as COUNTRY] || 'Unknown Country',
               category: VISA_CATEGORY_LABELS[request.data?.visaCategory as VISA_CATEGORY] || 'Unknown Category',
               nationality: NATIONALITY_LABELS[request.data?.nationality as NATIONALITY] || 'Unknown Nationality',
