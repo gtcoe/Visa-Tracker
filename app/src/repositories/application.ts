@@ -408,16 +408,14 @@ const applicationRepository = () => {
       // }
       
       if (params.from_date && params.from_date.trim()) {
-        query += ` AND app.created_at >= ? 00:00:00`;
-        queryParams.push(params.from_date.trim());
+        query += ` AND app.created_at >= '${params.from_date.trim()} 00:00:00'`;
       }
       
       if (params.to_date && params.to_date.trim()) {
-        query += ` AND app.created_at <= ? 23:59:59`;
-        queryParams.push(params.to_date.trim());
+        query += ` AND app.created_at <= '${params.to_date.trim()} 23:59:59'`;
       } else {
         // If no to_date provided, use current date
-        query += ` AND app.created_at <= CURRENT_DATE() 23:59:59`;
+        query += ` AND app.created_at <= '${new Date().toISOString().split('T')[0]} 23:59:59'`; 
       }
       
       if (params.queue && params.queue > 0) {
