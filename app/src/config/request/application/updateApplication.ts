@@ -32,6 +32,18 @@ const validationSchema: ValidationSchema = {
       type: "string",
       required: false,
     },
+    dox_received_at: {
+      type: "string",
+      required: false,
+    },
+    submission_at: {
+      type: "string",
+      required: false,
+    },
+    collection_at: {
+      type: "string",
+      required: false,
+    },
     token_user_id: {
       type: "number",
       required: true,

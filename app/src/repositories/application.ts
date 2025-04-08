@@ -81,12 +81,12 @@ const applicationRepository = () => {
   ): Promise<void> => {
     try {
       const query = `INSERT INTO ${constants.TABLES.APPLICATION_HISTORY} 
-                (application_id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by) 
-                SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by 
+                (application_id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, dox_received_at, submission_at, collection_at, last_updated_by) 
+                SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, dox_received_at, submission_at, collection_at, last_updated_by 
                 FROM ${constants.TABLES.APPLICATION} WHERE id = ?`;
       await Mysql.query(query, [applicationId]);
     } catch (e) {
-      logger.error(`Error in insertApplicationHistory: ${generateError(e)}`);
+      logger.error(`Error in insertHistory: ${generateError(e)}`);
       throw e;
     }
   };
@@ -94,7 +94,7 @@ const applicationRepository = () => {
   //Done
   const getByReferenceNumber = async (reference_number: string): Promise<GetApplicationDataDBResponse> => {
     try {
-      const query = `SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by FROM ${constants.TABLES.APPLICATION} WHERE reference_number = ? `;
+      const query = `SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by, dox_received_at, submission_at, collection_at FROM ${constants.TABLES.APPLICATION} WHERE reference_number = ? `;
       const params = [reference_number];
       return await Mysql.query<ApplicationData[]>(query, params);
     } catch (e) {
@@ -106,7 +106,7 @@ const applicationRepository = () => {
     //Done
     const getById = async (id: number): Promise<GetApplicationDataDBResponse> => {
       try {
-        const query = `SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by FROM ${constants.TABLES.APPLICATION} WHERE id = ? `;
+        const query = `SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by, dox_received_at, submission_at, collection_at FROM ${constants.TABLES.APPLICATION} WHERE id = ? `;
         const params = [id];
         return await Mysql.query<ApplicationData[]>(query, params);
       } catch (e) {
@@ -156,12 +156,16 @@ const applicationRepository = () => {
     teamRemarks?: string,
     clientRemarks?: string,
     billingRemarks?: string,
+    doxReceivedAt?: string,
+    submissionAt?: string,
+    collectionAt?: string,
     lastUpdatedBy?: number
   ): Promise<any> => {
     try {
       const query = `UPDATE ${constants.TABLES.APPLICATION} 
                 SET queue = ?, external_status = ?, 
                 team_remarks = ?, client_remarks = ?, billing_remarks = ?,
+                dox_received_at = ?, submission_at = ?, collection_at = ?,
                 last_updated_by = ? 
                 WHERE id = ?`;
       const params = [
@@ -170,6 +174,9 @@ const applicationRepository = () => {
         teamRemarks || "", 
         clientRemarks || "", 
         billingRemarks || "", 
+        doxReceivedAt || null, 
+        submissionAt || null, 
+        collectionAt || null, 
         lastUpdatedBy, 
         applicationId
       ];
@@ -310,8 +317,8 @@ const applicationRepository = () => {
     try {
 
       const query = `INSERT INTO ${constants.TABLES.APPLICATION_HISTORY} 
-                (application_id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by) 
-                SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, last_updated_by 
+                (application_id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, dox_received_at, submission_at, collection_at, last_updated_by) 
+                SELECT id, reference_number, pax_type, country_of_residence, client_user_id, state_of_residence, file_number_1, service_type, referrer, citizenship, travel_date, is_travel_date_tentative, priority_submission, interview_date, file_number_2, external_status, queue, status, olvt_number, team_remarks, client_remarks, billing_remarks, dox_received_at, submission_at, collection_at, last_updated_by 
                 FROM ${constants.TABLES.APPLICATION} WHERE id = ?`;
       await connection.query(query, [applicationId]);
 

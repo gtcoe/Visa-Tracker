@@ -1218,64 +1218,32 @@ const applicationService = () => {
   };
 
   /**
-   * Update Status
-   */
-  // const updateStatus = async (request: any): Promise<ServiceResponse> => {
-  //   try {
-  //     const { user_id, status, token_user_id } = request;
-  //     const userDetails = await userRepository.getById(user_id);
-  //     if (userDetails.error || userDetails.data.length < 1) {
-  //       logger.error("Invalid user ID");
-  //       return responseBuilder(
-  //         false,
-  //         responseMessages.INVALID_USER_ID,
-  //         null,
-  //         null
-  //       );
-  //     }
-  //     const resp = await applicationRepository.updateStatus(
-  //       status,
-  //       user_id,
-  //       token_user_id
-  //     );
-  //     if (resp.error) {
-  //       return responseBuilder(false, responseMessages.UPDATE_FAILED, null, null);
-  //     }
-  //     return responseBuilder(true, responseMessages.UPDATE_SUCCESS, null, null);
-  //   } catch (e) {
-  //     logger.error(`Error in updateStatus ${generateError(e)}`);
-  //     return responseBuilder(
-  //       false,
-  //       responseMessages.OPERATION_FAILED,
-  //       null,
-  //       null
-  //     );
-  //   }
-  // };
-
-  /**
    * Update Application Details
    */
   const updateApplicationDetails = async (request: any): Promise<ResponseModel> => {
-    const response = new ResponseModel(false);
+    const response = new ResponseModel();
     try {
-      const { 
-        id, 
-        queue, 
-        external_status, 
-        team_remarks, 
-        client_remarks, 
-        billing_remarks, 
-        token_user_id 
+      const {
+        id,
+        queue,
+        external_status,
+        team_remarks,
+        client_remarks,
+        billing_remarks,
+        dox_received_at,
+        submission_at,
+        collection_at,
+        token_user_id,
       } = request;
-      
-      // Verify application exists
-      const applicationDetails = await applicationRepository.getById(id);
-      if (! applicationDetails.status || ! applicationDetails.data ||   applicationDetails.data.length === 0) {
-        response.message = `Application with ID ${id} not found`;
+
+      // Verify if application exists
+      const appInfo = await applicationRepository.getById(id);
+      if (!appInfo.data || appInfo.data.length === 0) {
+        response.status = false;
+        response.message = "No application found with this id";
         return response;
       }
-      
+
       // Update application details
       const resp = await applicationRepository.updateApplicationDetails(
         id,
@@ -1284,20 +1252,24 @@ const applicationService = () => {
         team_remarks,
         client_remarks,
         billing_remarks,
+        dox_received_at,
+        submission_at,
+        collection_at,
         token_user_id
       );
-      
-      if (!resp.status) {
+
+      if (resp.status === false) {
+        response.status = false;
         response.message = "Failed to update application details";
         return response;
       }
-      
-      response.setStatus(true);
+
+      response.status = true;
       response.message = "Application details updated successfully";
       return response;
-      
     } catch (e) {
       logger.error(`Error in updateApplicationDetails ${generateError(e)}`);
+      response.status = false;
       response.message = "Failed to update application details";
       return response;
     }
